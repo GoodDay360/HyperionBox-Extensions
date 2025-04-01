@@ -1,5 +1,5 @@
 {
-  "name": "bundle",
+  "name": "extensions",
   "version": "1.0.0",
   "type": "module",
   "keywords": [],
@@ -7,7 +7,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "minimist": "^1.2.8",
-    "puppeteer": "^24.4.0"
+    "find-free-ports": "^3.1.1",
+    "node-fetch": "^3.3.2",
+    "puppeteer-core": "^24.4.0"
   }
 }

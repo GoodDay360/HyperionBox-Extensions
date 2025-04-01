@@ -1,11 +1,16 @@
 import get_list from './get_list.js';
-import get_sepcific from './get_specific.js';
+import get_preview from './get_preview.js';
+import get_watch from './get_watch.js';
 
 const main = async (options) => {
     const method = options.method
-    if (!method) {console.error("Missing 'method' argument."); return;}
-    else if (method === "get_list") {await get_list(options);}
-    else if (method === "get_specific") {await get_sepcific(options)}
+    if (!method) {
+        console.error("Missing 'method' argument."); 
+        return {code:500, message: "Missing 'method' argument."};
+    }
+    else if (method === "get_list") {return await get_list(options);}
+    else if (method === "get_preview") {return await get_preview(options)}
+    else if (method === "get_watch") {return await get_watch(options)}
     else {console.error("Unkown method!");}
 }
 
