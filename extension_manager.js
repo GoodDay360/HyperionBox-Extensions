@@ -3,11 +3,11 @@ import path from 'path';
 import { fileURLToPath, pathToFileURL} from 'url'
 
 const extension_manager = async (options) => {
-	if (!options.source) {
+	if (!options.source_id) {
 		console.error("Missing 'source' key.");
 		return {code:500, message: "Missing 'source' key."};
 	}else{
-		const source_path = pathToFileURL(path.join(options.BASE_DIRECTORY, "sources", options.source, 'main.js')).href;
+		const source_path = pathToFileURL(path.join(options.BASE_DIRECTORY, "sources", options.source_id, 'main.js')).href;
 		if (!existsSync(fileURLToPath(source_path))) {
 			console.error("Source not exist!")
 			return {code:500, error: "Source not exist!"}

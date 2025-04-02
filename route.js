@@ -4,6 +4,9 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import extension_manager from './extension_manager.js';
+import url from 'url';
+import normalizeUrl from 'normalize-url';
+import proxy_request from './scripts/proxy_request.js';
 
 const validArgs = ['log_path', 'port'];
 
@@ -32,6 +35,7 @@ if (arges.port === "random"){
 
 (async () => {
     const server = http.createServer(async (req, res) => {
+        const parsed_url = url.parse(normalizeUrl(`http://${req.headers.host}${req.url}`, { removeTrailingSlash: true }), true);
         res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins (or specify your domain)
         res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS'); // Allow specific methods
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -39,8 +43,27 @@ if (arges.port === "random"){
             res.writeHead(200); // HTTP OK
             res.end();
             return; // End processing here
+        }else if (req.method === 'GET') {
+            if (parsed_url.pathname === "/proxy_request"){
+                try {
+                    // Use the proxy_request function to fetch the HLS segment stream
+                    const { data, content_type } = await proxy_request({ url: parsed_url.query.url, referer: parsed_url.query.referer });
+
+                    res.writeHead(200, { 'Content-Type': content_type });
+                    data.pipe(res);
+            
+                } catch (error) {
+                    console.error('Error in proxy_request route:', error.message);
+                    res.writeHead(500, { 'Content-Type': 'text/plain' });
+                    res.end('Internal Server Error');
+                }
+            }else {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.write('Route not found');
+                res.end();
+            }
         }else if (req.method === 'POST') {
-            if (req.url === '/request_extension') {
+            if (parsed_url.pathname  === '/request_extension') {
                 let body = '';
 
                 req.on('data', chunk => {
@@ -53,7 +76,8 @@ if (arges.port === "random"){
                         
                         options.BASE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
                         options.log_output_dir = options.log_output_dir || path.join(options.BASE_DIRECTORY, "log", "extension");
-
+                        options.cache_dir = options.cache_dir || path.join(options.BASE_DIRECTORY, ".cache");
+                        options.port = port;
                         console.log(options);
                         const result = await extension_manager(options);
 
@@ -67,7 +91,7 @@ if (arges.port === "random"){
                         res.end();
                     }
                 });
-            } else {
+            }else {
                 res.writeHead(404, { 'Content-Type': 'text/plain' });
                 res.write('Route not found');
                 res.end();

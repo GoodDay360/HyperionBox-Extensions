@@ -8,7 +8,7 @@ const initiate_puppeteer = async (options) => {
     const browser = await puppeteer.launch({
         browser:"firefox",
         executablePath: options.browser_path,
-        headless:false
+        headless:true,
     });
     const page = await browser.newPage();
     await page.setViewport({width: 1080, height: 1024});

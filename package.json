@@ -7,8 +7,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "find-free-ports": "^3.1.1",
-    "node-fetch": "^3.3.2",
-    "puppeteer-core": "^24.4.0"
+    "find-free-ports": "3.1.1",
+    "m3u8-parser": "^7.2.0",
+    "node-fetch": "3.3.2",
+    "normalize-url": "^8.0.1",
+    "puppeteer-core": "24.5.0"
   }
 }

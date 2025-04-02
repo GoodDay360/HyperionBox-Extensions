@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-core';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path, { dirname } from 'path';
 import { fileURLToPath, pathToFileURL} from 'url'
 import initiate_puppeteer from '../../initiate_puppeteer.js';
@@ -20,26 +20,22 @@ const get_watch = async (options) => {
 
         await page.setRequestInterception(true);
         
-    
         
-
-
-        await page.goto(encodeURI(`https://hianime.to/watch/the-100-girlfriends-who-really-really-really-really-really-love-you-season-2-19435?ep=131811`));
-        await page.evaluate(()=>{
-            localStorage.setItem('currentSource', 'sub');
-            localStorage.setItem('v2.6_currentServer', '4');
-        })
+        await page.goto(encodeURI(`https://hianime.to/watch/${encodeURIComponent(options.preview_id)}?ep=${encodeURIComponent(options.watch_id)}`));
+        await page.evaluate((options)=>{
+            localStorage.setItem('currentSource', options.server_type);
+            localStorage.setItem('v2.6_currentServer', options.server_id);
+        }, options)
         
         await page.reload(); 
         
         const data = {}
-
         page.removeAllListeners("request");
         data.media_info = await new Promise((resolve) => {
             const data = {};
             data.cc = []
             let timeoutHandle;
-            const timeout = 10000;
+            const timeout = 8000;
             page.on('request', async (interceptedRequest) => {
                 if (interceptedRequest.isInterceptResolutionHandled()) return;
 
@@ -65,7 +61,7 @@ const get_watch = async (options) => {
                     const url_obj = new URL(url);
                     const fileName = url_obj.pathname.split('/').pop().split('.').slice(0, -1).join('.');
                     if (fileName != "master"){
-                        data.url = url;
+                        data.temp_url = url;
                         data.type = "hls";
                     }
                 }
@@ -75,11 +71,48 @@ const get_watch = async (options) => {
                 page.removeAllListeners("request");
             }, timeout);
         });
+
+        // get list of url and quality
+        const list_of_url = [];
+        const original_url = new URL(data.media_info.temp_url);
+        const file_name = original_url.pathname.split("/").pop();
+        const splited_file_name = file_name.split("-");
+        const basePath = original_url.pathname.split("/").slice(0, -1).join("/");
+        for (let i = 1; i <= 3; i++){
+            const result = {}
+            const managed_file_name = [splited_file_name[0], `f${i}`, ...splited_file_name.slice(2)];
+            const file_name = managed_file_name.join("-");
+            result.quality = i === 1 ? "1080p" : i === 2 ? "720p" : "360p";
+            result.url = `${original_url.origin}${basePath}/${file_name}`;
+            list_of_url.push(result)
+        }
         
-        await convert_hls({
-            url: data.media_info.url,
-            referer: 'https://megacloud.club/',
-        });
+        data.media_info.source = []
+        for (const item of list_of_url) {
+            try{
+                const cache_dir = path.join(options.cache_dir, "watch", options.source_id, options.preview_id, options.watch_id)
+                await fs.mkdir(cache_dir, { recursive: true });
+                const output = path.join(cache_dir, `${item.quality}.m3u8`)
+
+                const parsed_temp_url = new URL(item.url);
+                const request_convert_result = await convert_hls({
+                    url: item.url,
+                    referer: 'https://megacloud.club/',
+                    route: options.server_id === "1" ? `${parsed_temp_url.origin}${parsed_temp_url.pathname.substring(0, parsed_temp_url.pathname.lastIndexOf('/'))}/` : "",
+                    output,
+                    options,
+                });
+
+                if (request_convert_result.code === 200) data.media_info.source.push({
+                    quality: item.quality,
+                    uri: request_convert_result.uri
+                });
+            }catch(e){
+                console.error(e)
+            }
+        }
+        delete data.media_info.temp_url;
+        // =================================
 
         await page.waitForSelector("#servers-content",{timeout: 5000});
         await page.waitForSelector(".server-item",{timeout: 5000});
@@ -138,7 +171,6 @@ const get_watch = async (options) => {
             }
             return result;
         })
-        console.log(data)
         return {code:200, message:"OK", result:data}
     }catch(e){
         console.error(e)
