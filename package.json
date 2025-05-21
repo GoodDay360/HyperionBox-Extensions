@@ -7,10 +7,11 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dayjs": "^1.11.13",
     "find-free-ports": "3.1.1",
     "m3u8-parser": "^7.2.0",
     "node-fetch": "3.3.2",
     "normalize-url": "^8.0.1",
-    "puppeteer-core": "24.5.0"
+    "puppeteer-core": "^24.9.0"
   }
 }
