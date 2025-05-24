@@ -63,7 +63,8 @@ const get_preview = async (options) => {
         const episodes_response = await get_episodes(options);
         if (episodes_response.code !== 200) return episodes_response;
         else data.episodes = episodes_response.result
-
+        data.type_schema = 1;
+        
         return {code:200, message:"OK", result:data};
     }catch (error) {
         console.error(error);

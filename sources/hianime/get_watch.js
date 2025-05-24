@@ -164,6 +164,7 @@ const get_watch = async (options) => {
             }
             return result;
         })
+        data.type_schema = 1;
         return {code:200, message:"OK", result:data}
     }catch(e){
         console.error(e)

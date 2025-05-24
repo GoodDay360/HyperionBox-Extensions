@@ -33,7 +33,7 @@ const get_episodes = async (options) => {
                 const ssl_item = ss.querySelectorAll(".ssl-item");
                 for (const ssl of ssl_item) {
                     const item = {}
-                    item.index = ssl.getAttribute("data-number");
+                    item.index = parseInt(ssl.getAttribute("data-number"));
                     item.title = ssl.getAttribute("title");
                     item.id = ssl.getAttribute("data-id");
                     result_per_box.push(item)
