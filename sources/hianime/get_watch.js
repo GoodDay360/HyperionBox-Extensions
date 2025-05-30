@@ -19,7 +19,7 @@ const get_watch = async (options) => {
         options.browser_page.removeAllListeners("request");
         data.media_info = await new Promise((resolve) => {
             const data = {};
-            data.cc = []
+            data.track = []
             let timeoutHandle;
             const timeout = 8000;
             options.browser_page.on('request', async (interceptedRequest) => {
@@ -36,10 +36,14 @@ const get_watch = async (options) => {
                 }
 
                 if (url.endsWith('.vtt')) {
-                    if (!data.cc.includes(url)) {
+                    if (!data.track.includes(url)) {
                         const url_obj = new URL(url);
                         const fileName = url_obj.pathname.split('/').pop().split('.').slice(0, -1).join('.');
-                        data.cc.push({[fileName]:url});
+                        data.track.push({
+                            url,
+                            label:fileName,
+                            kind:"captions"
+                        });
                         console.log(`Found .vtt file: ${url}`);
                     }
                     reset_timout()

@@ -130,22 +130,19 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                 });
             }else if (parsed_url.pathname === "/shutdown") {
                 try {
+                    res.writeHead(200, { 'Content-Type': 'text/plain' });
+                    res.write('Server is shutting down...');
+                    res.end();
+
                     try{
                         REQUEST_EXTENSION_BROWSER.close()
                         REQUEST_DOWNLOAD_BROWSER.close()
                     }catch (error) {
                         console.error('Error shutting down the server:', error.message);
                     }
-                    
-                    res.writeHead(200, { 'Content-Type': 'text/plain' });
-                    res.write('Server is shutting down...');
-                    res.end();
 
-                    // Close the server and exit the script
-                    server.close(() => {
-                        console.log('Server shut down');
-                        process.exit(0); // Exit the script
-                    });
+                    process.exit(0);
+                    
                 } catch (error) {
                     console.error('Error shutting down the server:', error.message);
                     res.writeHead(500, { 'Content-Type': 'text/plain' });
