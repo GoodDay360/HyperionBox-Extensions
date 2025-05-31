@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import url from 'url';
 import normalizeUrl from 'normalize-url';
 import proxy_request from './scripts/proxy_request.js';
-import { initiate_puppeteer } from './setup/initiate_puppeteer.js';
+import { initiate_puppeteer, load_new_page } from './setup/initiate_puppeteer.js';
 import request_source from './setup/request_source.js';
 
 const BASE_DIRECTORY = dirname(fileURLToPath(import.meta.url))
@@ -26,7 +26,11 @@ for (let i = 0; i < all_args.length; i++) {
         console.log(`Invalid argument: ${arg}`);
     }
 }
-if (!args.log_path) args.log_path = "./log/extension/initiate_result.json";
+if (!args.log_path) {
+    const log_dir = path.join(BASE_DIRECTORY, "log");
+    if (!fs.existsSync(log_dir)) fs.mkdirSync(log_dir, { recursive: true });
+    args.log_path = path.join(log_dir, "initiate_extension_result.json");
+}
 
 let PORT;
 if (args.port === "random"){
@@ -128,6 +132,50 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                     
                     await request_source({options,response:res,browser:REQUEST_DOWNLOAD_BROWSER,request_timeout:REQUEST_DOWNLOAD_TIMEOUT})
                 });
+            }else if (parsed_url.pathname === "/request_open_external") {
+                let body = '';
+
+                req.on('data', chunk => {
+                    body += chunk;
+                });
+
+                req.on('end', async () => {
+                    try {
+
+                        const options = JSON.parse(body);
+                        const url = options.url;
+                        const initiate_result = await initiate_puppeteer(args.browser_path, false);
+                        if (initiate_result.code == 200) {
+                            const result_load_new_page = await load_new_page(initiate_result.browser);
+                            if (result_load_new_page.code === 200){
+                                const browser_page = result_load_new_page.browser_page;
+                                await browser_page.goto(url, { waitUntil: 'networkidle0' });
+                                
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.write(JSON.stringify({code:200, message:"Open successfully"}));
+                                res.end();
+                            }else{
+                                res.writeHead(500, { 'Content-Type': 'application/json' });
+                                res.write(JSON.stringify({code:200, message:"Fail to load new page"}));
+                                res.end();
+                                return;
+                            }
+                        
+                        }else{
+                            res.writeHead(500, { 'Content-Type': 'application/json' });
+                            res.write(JSON.stringify({code:500, message:"Fail to initiate puppeteer"}));
+                            res.end();
+                        }
+                    } catch (error) {
+                        console.error('Error in request_open_external route:', error.message);
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end('Internal Server Error');
+                    }
+                    
+                });
+
+                
+                
             }else if (parsed_url.pathname === "/shutdown") {
                 try {
                     res.writeHead(200, { 'Content-Type': 'text/plain' });

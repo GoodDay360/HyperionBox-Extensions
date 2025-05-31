@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 
 
-export const initiate_puppeteer = async (browser_path) => {
+export const initiate_puppeteer = async (browser_path, headless=true) => {
     if (!browser_path) {
         console.error("Missing 'browser_path' argument."); 
         return {code:500, message: "Missing 'browser_path' argument."};
@@ -9,7 +9,7 @@ export const initiate_puppeteer = async (browser_path) => {
     const browser = await puppeteer.launch({
         browser:"firefox",
         executablePath: browser_path,
-        headless:true,
+        headless,
         extraPrefsFirefox: {
             'dom.allow_scripts_to_close_windows': true,
         },
@@ -18,7 +18,7 @@ export const initiate_puppeteer = async (browser_path) => {
 }
 
 
-export const load_new_page = async (browser) => {
+export const load_new_page = async (browser,create=true) => {
     if (browser === null)  return {code:500, message: "Puppeteer not initiate_puppeteer yet!"};
     const page = await browser.newPage();
     await page.setRequestInterception(true);
