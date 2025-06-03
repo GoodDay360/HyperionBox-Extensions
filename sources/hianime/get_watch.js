@@ -6,7 +6,7 @@ import convert_hls from '../../scripts/convert_hls.js';
 
 const get_watch = async (options) => {
     try{
-        await options.browser_page.goto(encodeURI(`${options.domain}/watch/${encodeURIComponent(options.preview_id)}?ep=${encodeURIComponent(options.watch_id)}`));
+        await options.browser_page.goto(encodeURI(`https://hianime.to/watch/${encodeURIComponent(options.preview_id)}?ep=${encodeURIComponent(options.watch_id)}`));
         if (options.server_type || options.server_id){
             await options.browser_page.evaluate((server_type,server_id)=>{
                 if (server_type) localStorage.setItem('currentSource', server_type);

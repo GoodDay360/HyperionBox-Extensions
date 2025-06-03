@@ -1,5 +1,4 @@
 import get_episodes from './get_episodes.js';
-import initiate_puppeteer from '../../initiate_puppeteer.js';
 import fs from 'fs';
 import path, { dirname } from 'path';
 
@@ -8,21 +7,10 @@ const get_preview = async (options) => {
         console.error("Missing 'preview_id' key."); 
         return {code:500, message: "Missing 'preview_id' key."};
     }
-    const result_initiate_puppeteer = await initiate_puppeteer(options);
-    let browser, page;
     try {
-        if (result_initiate_puppeteer.code === 200){
-            browser = result_initiate_puppeteer.data.browser;
-            page = result_initiate_puppeteer.data.page;
-        }else{
-            return {code:200, message:"Fail to initiate puppeteer"};
-        }
+        await options.browser_page.goto(encodeURI(`https://hianime.to/${encodeURIComponent(options.preview_id)}`));
         
-        await page.goto(encodeURI(`${options.domain}/${encodeURIComponent(options.preview_id)}`));
-        
-
-
-        const data = await page.evaluate(()=> {
+        const data = await options.browser_page.evaluate(()=> {
             const result = {};
 
             const main_wrapper = document.querySelector("#main-wrapper");
@@ -50,7 +38,7 @@ const get_preview = async (options) => {
             const film_info_wrap = content.querySelector(".anisc-info").querySelectorAll(".item");
             film_info_wrap.forEach((item_el, _)=>{
                 const info_list = []
-                item_el.querySelectorAll(".name").forEach(name_el => {
+                item_el.querySelectorAll(".name").forEach((name_el) => {
                     if (name_el.textContent) {
                         info_list.push(name_el.textContent)
                     }
@@ -64,13 +52,10 @@ const get_preview = async (options) => {
         if (episodes_response.code !== 200) return episodes_response;
         else data.episodes = episodes_response.result
         data.type_schema = 1;
-        
         return {code:200, message:"OK", result:data};
     }catch (error) {
         console.error(error);
         return {code:500, message: error}
-    }finally{
-        await browser.close();
     }
     
 }

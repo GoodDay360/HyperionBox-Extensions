@@ -2,30 +2,18 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath, pathToFileURL} from 'url'
-import initiate_puppeteer from '../../initiate_puppeteer.js';
-
-
 
 const get_list = async (options) => {
-    const result_initiate_puppeteer = await initiate_puppeteer(options);
-    if (result_initiate_puppeteer.code !== 200) return result_initiate_puppeteer;
-    let browser, page;
     
     try {
-        if (result_initiate_puppeteer.code === 200){
-            browser = result_initiate_puppeteer.data.browser;
-            page = result_initiate_puppeteer.data.page;
-        }else{
-            return {code:200, message:"Fail to initiate puppeteer"};
-        }
-        await page.goto(encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search)}&page=${encodeURIComponent(options.page || 1)}`));
+        await options.browser_page.goto(encodeURI(`https://hianime.to/search?keyword=${encodeURIComponent(options.search)}&page=${encodeURIComponent(options.page || 1)}`));
         const result = {}
 
-        result.data = await page.evaluate(() => {
+        result.data = await options.browser_page.evaluate(() => {
             const _data = []
-            const film_item = document.querySelector('.film_list-wrap').querySelectorAll('.flw-item');
-            film_item.forEach(node => {
-                item_data = {}
+            const film_item = document.querySelector('.film_list-wrap')?.querySelectorAll('.flw-item');
+            film_item.forEach((node) => {
+                const item_data = {}
                 const film_poster = node.querySelector(".film-poster");
                 item_data.cover = film_poster.querySelector("img").getAttribute("data-src");
                 
@@ -37,16 +25,16 @@ const get_list = async (options) => {
             })
             return _data;
         })
-        const max_page = await page.evaluate(() => {
+        const max_page = await options.browser_page.evaluate(() => {
             try {
                 let _max_page;
                 const pagination = document.querySelector('.pagination');
                 const page_items = pagination.querySelectorAll('.page-item')
-                page_items.forEach(node => {
+                page_items.forEach((node) => {
                     const title = node.querySelector(".page-link").getAttribute("title");
                     if (title === "Last"){
                         const url = node.querySelector(".page-link").getAttribute("href");
-                        _max_page = parseInt(new URLSearchParams(url.split('?')[1]).get('page'), 10);
+                        _max_page = parseInt(new URLSearchParams(url.split('?')[1]).get('page')??"", 10);
                     }
                 })
                 return _max_page;
@@ -68,8 +56,6 @@ const get_list = async (options) => {
                 message: error,
             }
         }
-    }finally {
-        await browser.close();
     }
 }
 
