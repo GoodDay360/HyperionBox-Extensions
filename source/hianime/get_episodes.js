@@ -16,9 +16,9 @@ const get_episodes = async (options) => {
         }
         
 
-        await page.goto(encodeURI(`${options.domain}/watch/${options.preview_id}`));
+        await page.goto(encodeURI(`https://hianime.to/watch/${options.preview_id}`));
         // await page.goto("https://bot.sannysoft.com/")
-        console.log(encodeURI(`${options.domain}/watch/${options.preview_id}`))
+        console.log(encodeURI(`https://hianime.to/watch/${options.preview_id}`))
         
         await page.waitForSelector(".detail-infor-content",{timeout: 5000});
 

@@ -18,7 +18,7 @@ const get_preview = async (options) => {
             return {code:200, message:"Fail to initiate puppeteer"};
         }
         
-        await page.goto(encodeURI(`${options.domain}/${encodeURIComponent(options.preview_id)}`));
+        await page.goto(encodeURI(`https://hianime.to/${encodeURIComponent(options.preview_id)}`));
         
 
 

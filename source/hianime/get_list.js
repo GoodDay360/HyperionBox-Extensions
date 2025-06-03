@@ -18,7 +18,7 @@ const get_list = async (options) => {
         }else{
             return {code:200, message:"Fail to initiate puppeteer"};
         }
-        await page.goto(encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search)}&page=${encodeURIComponent(options.page || 1)}`));
+        await page.goto(encodeURI(`https://hianime.to/search?keyword=${encodeURIComponent(options.search)}&page=${encodeURIComponent(options.page || 1)}`));
         const result = {}
 
         result.data = await page.evaluate(() => {

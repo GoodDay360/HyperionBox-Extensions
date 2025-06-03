@@ -4,8 +4,6 @@ import get_watch from './get_watch.js';
 
 const main = async (options) => {
     const method = options.method
-    options.domain = "https://hianimez.to"
-    
     if (!method) {
         console.error("Missing 'method' argument."); 
         return {code:500, message: "Missing 'method' argument."};
