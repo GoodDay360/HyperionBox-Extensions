@@ -8,7 +8,7 @@ const get_preview = async (options) => {
         return {code:500, message: "Missing 'preview_id' key."};
     }
     try {
-        await options.browser_page.goto(encodeURI(`https://hianime.to/${encodeURIComponent(options.preview_id)}`));
+        await options.browser_page.goto(encodeURI(`${options.domain}/${encodeURIComponent(options.preview_id)}`));
         
         const data = await options.browser_page.evaluate(()=> {
             const result = {};

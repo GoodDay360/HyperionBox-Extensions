@@ -9,8 +9,8 @@ const get_episodes = async (options) => {
         await options.browser_page.evaluate(() => {
             window.stop();
         });
-        await options.browser_page.goto(encodeURI(`https://hianime.to/watch/${options.preview_id}`));
-        console.log(encodeURI(`https://hianime.to/watch/${options.preview_id}`))
+        await options.browser_page.goto(encodeURI(`${options.domain}/watch/${options.preview_id}`));
+        
         
         await options.browser_page.waitForSelector(".detail-infor-content",{timeout: 5000});
 
