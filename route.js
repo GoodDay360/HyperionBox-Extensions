@@ -122,7 +122,6 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
 
                 req.on('end', async () => {
                     const options = JSON.parse(body);
-                    console.log("B",JSON.parse(body))
                     options.method = "get_watch";
                     options.BASE_DIRECTORY = BASE_DIRECTORY;
                     options.log_output_dir = options.log_output_dir || path.join(options.BASE_DIRECTORY, "log", "extension");
@@ -141,31 +140,15 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
 
                 req.on('end', async () => {
                     try {
-
                         const options = JSON.parse(body);
-                        const url = options.url;
-                        const initiate_result = await initiate_puppeteer(args.browser_path, false);
-                        if (initiate_result.code == 200) {
-                            const result_load_new_page = await load_new_page(initiate_result.browser);
-                            if (result_load_new_page.code === 200){
-                                const browser_page = result_load_new_page.browser_page;
-                                await browser_page.goto(url, { waitUntil: 'networkidle0' });
-                                
-                                res.writeHead(200, { 'Content-Type': 'application/json' });
-                                res.write(JSON.stringify({code:200, message:"Open successfully"}));
-                                res.end();
-                            }else{
-                                res.writeHead(500, { 'Content-Type': 'application/json' });
-                                res.write(JSON.stringify({code:200, message:"Fail to load new page"}));
-                                res.end();
-                                return;
-                            }
-                        
-                        }else{
-                            res.writeHead(500, { 'Content-Type': 'application/json' });
-                            res.write(JSON.stringify({code:500, message:"Fail to initiate puppeteer"}));
-                            res.end();
-                        }
+                        options.browser_path = args.browser_path
+                        options.method = "open_external";
+                        options.BASE_DIRECTORY = BASE_DIRECTORY;
+                        options.log_output_dir = options.log_output_dir || path.join(options.BASE_DIRECTORY, "log", "extension");
+                        options.cache_dir = options.cache_dir || path.join(options.BASE_DIRECTORY, ".download_cache");
+                        options.port = PORT
+
+                        await request_source({options,response:res,browser:REQUEST_DOWNLOAD_BROWSER,request_timeout:REQUEST_DOWNLOAD_TIMEOUT})
                     } catch (error) {
                         console.error('Error in request_open_external route:', error.message);
                         res.writeHead(500, { 'Content-Type': 'text/plain' });
