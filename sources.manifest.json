@@ -1,10 +1,10 @@
 {
     "hianime": {
         "url": "https://github.com/GoodDay360/HyperionBox-Extensions/releases/download/Source-HiAnime/hianime-latest.zip",
-        "domain": "https://hianimez.to",
-        "icon": "https://hianimez.to/favicon.ico",
+        "domain": "https://hianime.to",
+        "icon": "https://hianime.to/favicon.ico",
         "title": "HiAnime",
         "version": "1.0.0",
-        "description": "Extension source for 'hianimez.to'"
+        "description": "Extension source for 'hianime.to'"
     }
 }
