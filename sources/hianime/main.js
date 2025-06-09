@@ -5,7 +5,7 @@ import open_external from './open_external.js';
 
 const main = async (options) => {
     const method = options.method
-    options.domain = "https://hianimez.to"
+    options.domain = "https://hianime.to"
     
     if (!method) {
         console.error("Missing 'method' argument."); 
