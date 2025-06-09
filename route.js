@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import url from 'url';
 import normalizeUrl from 'normalize-url';
 import proxy_request from './scripts/proxy_request.js';
-import { initiate_puppeteer, load_new_page } from './setup/initiate_puppeteer.js';
+import { initiate_puppeteer } from './setup/initiate_puppeteer.js';
 import request_source from './setup/request_source.js';
 
 const BASE_DIRECTORY = dirname(fileURLToPath(import.meta.url))
