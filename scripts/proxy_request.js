@@ -2,16 +2,23 @@ import fetch from "node-fetch";
 
 const proxy_request = async ({ url, referer, headers }) => {
     try {
-        // Remove `host` to prevent conflicts
-        const sanitizedHeaders = { ...headers };
-        delete sanitizedHeaders.host;
+        console.log(url);
 
+        const allowedHeaders = ["Accept", "Accept-Language", "Range"];
+        const sanitizedHeaders = Object.keys(headers)
+            .filter(key => allowedHeaders.includes(key))
+            .reduce((obj, key) => {
+                obj[key] = headers[key];
+                return obj;
+            }, {});
+
+        
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                ...sanitizedHeaders, // Include headers from client request
+                ...sanitizedHeaders, 
                 'Referer': referer,
-                'User-Agent': sanitizedHeaders['User-Agent'] || 'Mozilla/5.0 (compatible)'
+                'User-Agent': 'Mozilla/5.0 (compatible)' 
             }
         });
 
