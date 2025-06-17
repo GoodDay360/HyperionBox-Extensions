@@ -1,12 +1,8 @@
-import puppeteer from 'puppeteer-core';
-import fs from 'fs';
-import path, { dirname } from 'path';
-import { fileURLToPath, pathToFileURL} from 'url'
 
 const get_list = async (options) => {
     
     try {
-        await options.browser_page.goto(encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search)||'+'}&page=${encodeURIComponent(options.page || 1)}`));
+        await options.browser_page.goto(encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search||'+')}&page=${encodeURIComponent(options.page || 1)}`));
         const result = {}
 
         result.data = await options.browser_page.evaluate(() => {
