@@ -70,27 +70,40 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
             return; // End processing here
         }else if (req.method === 'GET') {
             if (parsed_url.pathname === "/proxy_request"){
-                try {
-                    console.log(parsed_url.query.url);
+                
+                console.log(parsed_url.query.url);
 
-                    // Extract headers from the incoming request
-                    const incomingHeaders = { ...req.headers }; 
-
-                    const { data, headers } = await proxy_request({
-                        url: parsed_url.query.url,
-                        referer: parsed_url.query.referer,
-                        headers: incomingHeaders // Forward incoming headers to the proxy function
-                    });
+                // Extract headers from the incoming request
+                const incomingHeaders = { ...req.headers }; 
+                const retry_count = 0;
+                
+                while (true){
+                    let error;
+                    if (retry_count >= 3) {
+                        console.error('Error in proxy_request route.',error);
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end(`Internal Server Error: ${JSON.stringify(error)}`);
+                        break
+                    }else{
+                        try{
+                            const { data, headers } = await proxy_request({
+                                url: parsed_url.query.url,
+                                referer: parsed_url.query.referer,
+                                headers: incomingHeaders // Forward incoming headers to the proxy function
+                            });
+                            // Forward response headers
+                            res.writeHead(200, headers);
+                            data.pipe(res);
+                            break
+                        }catch(e){
+                            error = e;
+                            retry_count += 1;
+                            continue;
+                        }
+                    }
                     
-                    // Forward response headers
-                    res.writeHead(200, headers);
-                    data.pipe(res);
-
-                } catch (error) {
-                    console.error('Error in proxy_request route:', error.message);
-                    res.writeHead(500, { 'Content-Type': 'text/plain' });
-                    res.end('Internal Server Error');
                 }
+
             }else {
                 res.writeHead(404, { 'Content-Type': 'text/plain' });
                 res.write('Route not found');
