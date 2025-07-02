@@ -4,7 +4,7 @@
         "domain": "https://hianime.to",
         "icon": "https://hianime.to/favicon.ico",
         "title": "HiAnime",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "description": "Extension source for 'hianime.to'"
     }
 }
