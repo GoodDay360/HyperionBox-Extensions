@@ -166,7 +166,7 @@ const get_watch = async (options) => {
                 }
                 result.push(result_per_box)
             }
-            return result;
+            return [result];
         })
         data.type_schema = 1;
         return {code:200, message:"OK", result:data}

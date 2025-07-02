@@ -31,19 +31,24 @@ const get_preview = async (options) => {
             const eps = film_stats.querySelector(".tick-eps")?.textContent;
             if (eps) {result.stats.eps = eps}
             
-            content.querySelector(".film-description").querySelector(".text").querySelector("span").click()
-            content.querySelector(".film-description").querySelector(".text").querySelector("span").remove()
+            const span_more = content.querySelector(".film-description").querySelector(".text")?.querySelector("span")
+            if (span_more){
+                span_more.click();
+                span_more.remove();
+            }
             result.info.description = (content.querySelector(".film-description").querySelector(".text").textContent).trim();
             
             const film_info_wrap = content.querySelector(".anisc-info").querySelectorAll(".item");
             film_info_wrap.forEach((item_el, _)=>{
                 const info_list = []
+                item_head = item_el.querySelector(".item-head").textContent;
+                if (["Overview:"].includes(item_head)) return;
                 item_el.querySelectorAll(".name").forEach((name_el) => {
                     if (name_el.textContent) {
                         info_list.push(name_el.textContent)
                     }
                 });
-                result.info[item_el.querySelector(".item-head").textContent] = info_list.join(", ");
+                result.info[item_head] = info_list.join(", ");
             })
             
             return result;
