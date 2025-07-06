@@ -8,6 +8,7 @@
   "description": "",
   "dependencies": {
     "@puppeteer/browsers": "^2.10.5",
+    "cheerio": "^1.1.0",
     "dayjs": "1.11.13",
     "find-free-ports": "3.1.1",
     "m3u8-parser": "7.2.0",

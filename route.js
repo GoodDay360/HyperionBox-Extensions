@@ -72,36 +72,41 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
             if (parsed_url.pathname === "/proxy_request"){
                 
                 console.log(parsed_url.query.url);
-
-                // Extract headers from the incoming request
-                const incomingHeaders = { ...req.headers }; 
-                const retry_count = 0;
-                
-                while (true){
-                    let error;
-                    if (retry_count >= 3) {
-                        console.error('Error in proxy_request route.',error);
-                        res.writeHead(500, { 'Content-Type': 'text/plain' });
-                        res.end(`Internal Server Error: ${JSON.stringify(error)}`);
-                        break
-                    }else{
-                        try{
-                            const { data, headers } = await proxy_request({
-                                url: parsed_url.query.url,
-                                referer: parsed_url.query.referer,
-                                headers: incomingHeaders // Forward incoming headers to the proxy function
-                            });
-                            // Forward response headers
-                            res.writeHead(200, headers);
-                            data.pipe(res);
-                            break
-                        }catch(e){
-                            error = e;
-                            retry_count += 1;
-                            continue;
-                        }
-                    }
+                try{
+                    // Extract headers from the incoming request
+                    const incomingHeaders = { ...req.headers }; 
+                    const retry_count = 0;
                     
+                    while (true){
+                        let error;
+                        if (retry_count >= 3) {
+                            console.error('Error in proxy_request route.',error);
+                            res.writeHead(500, { 'Content-Type': 'text/plain' });
+                            res.end(`Internal Server Error: ${JSON.stringify(error)}`);
+                            break
+                        }else{
+                            try{
+                                const { data, headers } = await proxy_request({
+                                    url: parsed_url.query.url,
+                                    referer: parsed_url.query.referer,
+                                    headers: incomingHeaders // Forward incoming headers to the proxy function
+                                });
+                                // Forward response headers
+                                res.writeHead(200, headers);
+                                data.pipe(res);
+                                break
+                            }catch(e){
+                                error = e;
+                                retry_count += 1;
+                                continue;
+                            }
+                        }
+                        
+                    }
+                }catch (error) {
+                    console.error('Error in proxy_request route:', error.message);
+                    res.writeHead(500, { 'Content-Type': 'text/plain' });
+                    res.end(`Internal Server Error: ${JSON.stringify(error)}`);
                 }
 
             }else {
@@ -124,7 +129,13 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                     options.cache_dir = options.cache_dir || path.join(options.BASE_DIRECTORY, ".cache");
                     options.port = PORT
                     
-                    await request_source({options,response:res,browser:REQUEST_EXTENSION_BROWSER,request_timeout:REQUEST_EXTENSION_TIMEOUT})
+                    try {
+                        await request_source({options,response:res,browser:REQUEST_EXTENSION_BROWSER,request_timeout:REQUEST_EXTENSION_TIMEOUT})
+                    }catch (error) {
+                        console.error('Error in request_extension route:', error.message);
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end(`Internal Server Error: ${JSON.stringify(error)}`);
+                    }
                 });
             }else if(parsed_url.pathname  === '/request_download_info'){
                 let body = '';
@@ -142,7 +153,13 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                     options.port = PORT
                     // if (fs.existsSync(options.cache_dir)) fs.rmSync(options.cache_dir, { recursive: true });
                     
-                    await request_source({options,response:res,browser:REQUEST_DOWNLOAD_BROWSER,request_timeout:REQUEST_DOWNLOAD_TIMEOUT})
+                    try {
+                        await request_source({options,response:res,browser:REQUEST_EXTENSION_BROWSER,request_timeout:REQUEST_EXTENSION_TIMEOUT})
+                    }catch (error) {
+                        console.error('Error in request_extension route:', error.message);
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end(`Internal Server Error: ${JSON.stringify(error)}`);
+                    }
                 });
             }else if (parsed_url.pathname === "/request_open_external") {
                 let body = '';

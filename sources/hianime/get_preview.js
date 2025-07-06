@@ -1,6 +1,6 @@
 import get_episodes from './get_episodes.js';
-import fs from 'fs';
-import path, { dirname } from 'path';
+import * as cheerio from 'cheerio';
+
 
 const get_preview = async (options) => {
     if (!options.preview_id) {
@@ -8,54 +8,81 @@ const get_preview = async (options) => {
         return {code:500, message: "Missing 'preview_id' key."};
     }
     try {
-        await options.browser_page.goto(encodeURI(`${options.domain}/${encodeURIComponent(options.preview_id)}`));
         
-        const data = await options.browser_page.evaluate(()=> {
-            const result = {};
-
-            const main_wrapper = document.querySelector("#main-wrapper");
-            const detial = main_wrapper.querySelector("#ani_detail");
-            const content = detial.querySelector(".anis-content");
-            result.info = {};
-            result.info.cover = content.querySelector(".anisc-poster").querySelector("img").getAttribute("src");
-            result.info.title = content.querySelector(".anisc-detail").querySelector(".film-name").textContent;
-            const film_stats = content.querySelector(".anisc-detail").querySelector(".film-stats");
-
-            result.stats = {}
-            result.stats.pg = film_stats.querySelector(".tick-pg").textContent;
-            result.stats.quality = film_stats.querySelector(".tick-quality").textContent;
-            const sub = film_stats.querySelector(".tick-sub")?.textContent;
-            if (sub) {result.stats.sub = sub}
-            const dub = film_stats.querySelector(".tick-dub")?.textContent;
-            if (dub) {result.stats.dub = dub}
-            const eps = film_stats.querySelector(".tick-eps")?.textContent;
-            if (eps) {result.stats.eps = eps}
-            
-            const span_more = content.querySelector(".film-description").querySelector(".text")?.querySelector("span")
-            if (span_more){
-                span_more.click();
-                span_more.remove();
+        const url = encodeURI(`${options.domain}/${encodeURIComponent(options.preview_id)}`);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Referer': `${options.domain}/`,
             }
-            result.info.description = (content.querySelector(".film-description").querySelector(".text").textContent).trim();
-            
-            const film_info_wrap = content.querySelector(".anisc-info").querySelectorAll(".item");
-            film_info_wrap.forEach((item_el, _)=>{
-                const info_list = []
-                item_head = item_el.querySelector(".item-head").textContent;
-                if (["Overview:"].includes(item_head)) return;
-                item_el.querySelectorAll(".name").forEach((name_el) => {
-                    if (name_el.textContent) {
-                        info_list.push(name_el.textContent)
-                    }
-                });
-                result.info[item_head] = info_list.join(", ");
-            })
-            
-            return result;
+        });
+
+        if (!response.ok) {
+            return {code:500,message:response.statusText};
+        }
+        
+        const data = {};
+        
+
+        const $ = cheerio.load(await response.text());
+
+        const main_container = $("#ani_detail")
+
+        // stats
+        data.stats = {}
+
+        const film_stats_tick_item = main_container.find(".film-stats").find(".tick").find(".tick-item")
+        film_stats_tick_item.each((_, element) => {
+            const tick_item = $(element);
+            const key = tick_item.attr("class").split(/\s+/)[1].split("-")[1];
+            const content = tick_item.text();
+            data.stats[key] = content;
         })
-        const episodes_response = await get_episodes(options);
-        if (episodes_response.code !== 200) return episodes_response;
-        else data.episodes = episodes_response.result
+
+
+
+        // Info
+        data.info = {};
+        data.info.cover = main_container.find(".film-poster").find("img").attr("src");
+        const detail = main_container.find(".anisc-detail")
+
+        data.info.title = detail.find(".film-name").text();
+        // end info part 1
+
+        const anisc_info_item = main_container.find(".anisc-info-wrap").find(".anisc-info").find(".item")
+
+        anisc_info_item.each((_, element) => {
+            const item = $(element);
+            const key = item.find(".item-head").text().replace(":","").trim();
+            
+            if (key === "Overview") {
+                const content = item.find(".text").text();
+                data.info.description = content.trim();
+            }else if (key === "Genres"){
+                const genre_item_li = item.find("a");
+                const genre_list = [];
+                genre_item_li.each((_, element) => {
+                    genre_list.push($(element).attr("title"));
+                });
+
+                data.info[key] = genre_list.join(", ");
+            }
+            else{
+                const content = item.find(".name").text();
+                data.info[key] = content.trim();
+            }
+
+        })
+
+
+        const get_ep_result = await get_episodes(options);
+
+        if (get_ep_result?.code !== 200) {
+            return get_ep_result;
+        }
+
+        data.episodes = get_ep_result.result;
+
         data.type_schema = 1;
         return {code:200, message:"OK", result:data};
     }catch (error) {

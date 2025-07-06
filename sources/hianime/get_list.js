@@ -1,49 +1,54 @@
+import * as cheerio from 'cheerio';
+import fetch from "node-fetch";
+
 
 const get_list = async (options) => {
     
     try {
-        await options.browser_page.goto(encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search||'+')}&page=${encodeURIComponent(options.page || 1)}`));
-        const result = {}
-
-        result.data = await options.browser_page.evaluate(() => {
-            const _data = []
-            const film_item = document.querySelector('.film_list-wrap')?.querySelectorAll('.flw-item');
-            film_item.forEach((node) => {
-                const item_data = {}
-                const film_poster = node.querySelector(".film-poster");
-                item_data.cover = film_poster.querySelector("img").getAttribute("data-src");
-                
-                const film_detail = node.querySelector('.film-detail')
-                item_data.title = film_detail.querySelector("h3").querySelector("a").innerText
-                
-                item_data.id = film_detail.querySelector("h3").querySelector("a").getAttribute("href").split('/')[1].split('?')[0]
-                _data.push(item_data)
-            })
-            return _data;
-        })
-        const max_page = await options.browser_page.evaluate(() => {
-            try {
-                let _max_page;
-                const pagination = document.querySelector('.pagination');
-                const page_items = pagination.querySelectorAll('.page-item')
-                page_items.forEach((node) => {
-                    const title = node.querySelector(".page-link").getAttribute("title");
-                    if (title === "Last"){
-                        const url = node.querySelector(".page-link").getAttribute("href");
-                        _max_page = parseInt(new URLSearchParams(url.split('?')[1]).get('page')??"", 10);
-                    }
-                })
-                return _max_page;
-            } catch (error) {
-                return 0;
+        const url = encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search||'+')}&page=${encodeURIComponent(options.page || 1)}`);
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Referer': `${options.domain}/`,
             }
-        })
-        if (!max_page){
-            if (result.data.length) result.max_page = 1;
-            else result.max_page = 0;
-        }else result.max_page = max_page;
+        });
+
+        if (!response.ok) {
+            return {code:500,message:response.statusText};
+        }
         
-        return {code:200,message:"OK", result: result};
+
+        const $ = cheerio.load(await response.text());
+        const data = [];
+
+        $(".film_list-wrap").find(".flw-item").each((index, element) => {
+            const item_data = {};
+            const flw_item = $(element);
+
+            item_data.cover = flw_item.find(".film-poster").find("img").attr("data-src");
+            
+            const film_detail = flw_item.find(".film-detail");
+            item_data.title = film_detail.find("h3").find("a").text();
+            item_data.id = film_detail.find("h3").find("a").attr("href").split('/')[1].split('?')[0];
+            data.push(item_data);
+        });
+
+        let max_page = 0;
+        const last_page_item = $(".pre-pagination").find(".page-item").last()
+
+        if (last_page_item.html()) {
+            const page_url = last_page_item.find("a").attr("href")
+            if (page_url){
+                max_page = parseInt(new URLSearchParams(page_url.split('?')[1]).get('page')??"", 10);
+            }else{
+                max_page = parseInt(last_page_item.find("a").text(), 10);
+            }
+            
+        }
+
+        
+
+        return {code:200,message:"OK", result: {data, max_page}};
     }catch (error) {
         console.error(error);
         return  {
