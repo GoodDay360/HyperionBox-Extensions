@@ -1,0 +1,93 @@
+import get_episodes from './get_episodes.js';
+import * as cheerio from 'cheerio';
+import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
+
+const get_preview = async (options) => {
+    if (!options.preview_id) {
+        console.error("Missing 'preview_id' key."); 
+        return {code:500, message: "Missing 'preview_id' key."};
+    }
+    try {
+        
+        const url = encodeURI(`${options.domain}/${options.preview_id.replace("+","/")}`);
+        console.log(url)
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                ...custom_fetch_headers,
+                'Referer': `${options.domain}/`,
+            }
+        });
+
+        if (!response.ok) {
+            return {code:500,message:response.statusText};
+        }
+        
+        const data = {};
+        
+
+        const $ = cheerio.load(await response.text());
+
+        // No stats
+        data.stats = {};
+        // ===========
+
+        // Get info
+
+        data.info = {}
+        
+        const group_ele = $(".btn-group").first();
+        if (!group_ele.html()) {
+            return {code:404, message: "Preview not found."};
+        }
+        data.info.cover = group_ele.find(".hidden-xs").attr("src");
+        const diz_ele = group_ele.find(".diz-title")
+
+        data.info.title = diz_ele.find(".ploting").find("h1").text();
+        data.info.description = diz_ele.find(".ploting").find("p").text();
+
+        data.info["Rating"] = diz_ele.find(".filmsratings").find(".starsmediumorange").attr("title");
+
+        // ========
+
+        // Get episodes
+        data.episodes = []
+        const ep_selector = $("#epselector");
+        if (ep_selector.html()){
+            
+            ep_selector.find(".seasonContainer").each((_, element) => {
+                const ep_li = [];
+                const season_container = $(element);
+                season_container.find(".episodeList").find("a").each((__, element) => {
+                    const ep_info = {}
+                    const ep_ele = $(element);
+                    ep_info.index = ep_ele.attr("data-episode");
+                    ep_info.id = ep_ele.attr("data-episode");
+                    ep_info.title = ep_ele.find("span").text().replace(/\s+/g, ' ').trim().replace("/\n/g","");
+                    ep_li.push(ep_info);
+                })
+                data.episodes.push([ep_li]);
+            })
+            
+            data.type_schema = 2;
+        }else{
+            data.episodes.push([[{
+                index: 1,
+                id: options.preview_id,
+                title: "Full",
+            }]])
+
+            data.type_schema = 1;
+        }
+
+
+        console.log(data);
+        return {code:200, message:"OK", result:data};
+    }catch (error) {
+        console.error(error);
+        return {code:500, message: error}
+    }
+    
+}
+
+export default get_preview;

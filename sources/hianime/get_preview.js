@@ -1,6 +1,6 @@
 import get_episodes from './get_episodes.js';
 import * as cheerio from 'cheerio';
-
+import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
 
 const get_preview = async (options) => {
     if (!options.preview_id) {
@@ -13,6 +13,7 @@ const get_preview = async (options) => {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
+                ...custom_fetch_headers,
                 'Referer': `${options.domain}/`,
             }
         });

@@ -2,7 +2,7 @@ import fetch from "node-fetch";
 import { Parser } from 'm3u8-parser';
 import {  writeFileSync } from 'fs';
 import path from 'path';
-
+import custom_fetch_headers from "./custom_fetch_headers.js";
 
 const rephrase_player = ({data, referer, route, options}) => {
 
@@ -45,8 +45,8 @@ export const convert_player = async ({url, referer, route, output, options}) =>{
         const response = await fetch(url, {
             method: 'GET',
             headers: {
+                ...custom_fetch_headers,
                 'Referer': referer,
-                'User-Agent': 'Mozilla/5.0 (compatible)'
             }
         });
 
@@ -79,6 +79,7 @@ export const convert_master = async ({url, master_referer, player_referer, maste
         const response = await fetch(url, {
             method: 'GET',
             headers: {
+                ...custom_fetch_headers,
                 'Referer':  master_referer,
             }
         });

@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import fetch from "node-fetch";
-
+import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
 
 const get_list = async (options) => {
     
@@ -9,6 +9,7 @@ const get_list = async (options) => {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
+                ...custom_fetch_headers,
                 'Referer': `${options.domain}/`,
             }
         });

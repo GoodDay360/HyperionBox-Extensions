@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import custom_fetch_headers from "./custom_fetch_headers.js";
 
 const proxy_request = async ({ url, referer, headers }) => {
     try {
@@ -31,8 +32,8 @@ const proxy_request = async ({ url, referer, headers }) => {
             method: 'GET',
             headers: {
                 ...sanitizedHeaders, 
+                ...custom_fetch_headers,
                 'Referer': referer,
-                'User-Agent': 'Mozilla/5.0 (compatible)' 
             }
         });
 
