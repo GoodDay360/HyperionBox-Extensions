@@ -59,11 +59,11 @@ const get_episodes = async (options) => {
         }else{
             const ss_list = main_container.find("#detail-ss-list").find(".ss-list");
             const item_data = []
-            ss_list.find("a").each((_, element) => {
+            ss_list.find("a").each((index, element) => {
                 const ep_data = {};
 
                 const ele = $(element);
-                ep_data.index = parseInt(ele.attr("data-number"), 10);
+                ep_data.index = index;
                 ep_data.title = ele.attr("title");
                 ep_data.id = ele.attr("data-id");
 
