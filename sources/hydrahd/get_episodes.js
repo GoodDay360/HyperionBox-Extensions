@@ -26,8 +26,8 @@ const get_episodes = async ($) => {
                 id: "full",
                 title: "Full",
             }]])
-
-            type_schema = 2;
+            
+            type_schema = 1;
         }
 
         
