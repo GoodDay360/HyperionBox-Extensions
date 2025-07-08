@@ -27,7 +27,7 @@ const get_episodes = async ($) => {
                 title: "Full",
             }]])
 
-            type_schema = 1;
+            type_schema = 2;
         }
 
         
