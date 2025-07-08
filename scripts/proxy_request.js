@@ -1,11 +1,12 @@
-import fetch from "node-fetch";
 import custom_fetch_headers from "./custom_fetch_headers.js";
+import AbortController from 'abort-controller';
+import fetch from "node-fetch";
 
 const proxy_request = async ({ url, referer, headers }) => {
     try {
         console.log("=================")
-        console.log(referer);
-        console.log(url);
+        console.log("Proxy referer: ", referer);
+        console.log("Proxy url: ",url);
         console.log("=================")
 
         const allowedPatterns = [
@@ -26,9 +27,13 @@ const proxy_request = async ({ url, referer, headers }) => {
             return obj;
         }, {});
 
-
+        const controller = new AbortController();
+        let timeout = setTimeout(() => {
+            controller.abort(); 
+        }, 30000); 
         
         const response = await fetch(url, {
+            signal: controller.signal,
             method: 'GET',
             headers: {
                 ...sanitizedHeaders, 
@@ -36,9 +41,10 @@ const proxy_request = async ({ url, referer, headers }) => {
                 'Referer': referer,
             }
         });
+        clearTimeout(timeout);
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+            throw new Error(`Proxy Request Failed to fetch: ${response.status} ${response.statusText}`);
         }
         
 
@@ -46,12 +52,11 @@ const proxy_request = async ({ url, referer, headers }) => {
         delete responseHeaders['content-encoding'];
 
         const bodyStream = response.body;
-        console.log(responseHeaders);
 
-        return { data: bodyStream, headers: responseHeaders };
+        return { bodyStream, headers: responseHeaders };
 
     } catch (error) {
-        console.error('Error fetching:', error.message);
+        console.error('Proxy Request Error fetching:', error.message);
         throw error;
     }
 };

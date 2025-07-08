@@ -75,27 +75,26 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                 try{
                     // Extract headers from the incoming request
                     const incomingHeaders = { ...req.headers }; 
-                    const retry_count = 0;
+                    let retry_count = 0;
                     
                     while (true){
                         let error;
                         if (retry_count >= 3) {
-                            console.error('Error in proxy_request route.',error);
-                            res.writeHead(500, { 'Content-Type': 'text/plain' });
-                            res.end(`Internal Server Error: ${JSON.stringify(error)}`);
-                            break
+                            throw new Error(`Failed to fetch: ${error}`);
                         }else{
                             try{
-                                const { data, headers } = await proxy_request({
+                                const { bodyStream, headers } = await proxy_request({
                                     url: parsed_url.query.url,
                                     referer: parsed_url.query.referer,
                                     headers: incomingHeaders // Forward incoming headers to the proxy function
                                 });
                                 // Forward response headers
                                 res.writeHead(200, headers);
-                                data.pipe(res);
+                                
+                                bodyStream.pipe(res);
                                 break
                             }catch(e){
+                                console.error(`${e}, Retrying ${retry_count}...`);    
                                 error = e;
                                 retry_count += 1;
                                 continue;
@@ -104,9 +103,14 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                         
                     }
                 }catch (error) {
-                    console.error('Error in proxy_request route:', error.message);
-                    res.writeHead(500, { 'Content-Type': 'text/plain' });
-                    res.end(`Internal Server Error: ${JSON.stringify(error)}`);
+                    try{
+                        console.error('Error in proxy_request route:', error.message);
+                        res.writeHead(500, { 'Content-Type': 'text/plain' });
+                        res.end(`Internal Server Error: ${JSON.stringify(error)}`);
+                    }catch(error){
+                        console.error('Unabled: to write error head. Giving away...', error.message);
+                    }
+                    
                 }
 
             }else {

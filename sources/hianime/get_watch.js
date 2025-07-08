@@ -177,60 +177,67 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
 
         // Get media source using headless browser.
         ;await (async () => {
-            // const look_up_media_result = {
-            //     url: 'https://cloudburst82.xyz/_v7/71f87b4028d27b3ba749bd2029f3248245618a740ca81a9a9863f257784436f85c939482f4d306945639b935dc612f232173cae4f207297dea8798f69741cdadcf03986938ae645355b02ac49101bd99d26dbcacac3e6ab00b678324a21474728d09a70cb4b5086fbc36943efb9f1695c522b23382b639d8f473c8ce9a528151/master.m3u8',
-            //     type: 'master'
-            // }
-
-            console.log(prefer_server_id, prefer_server_type)
 
             const selected_server_index = data.server_info.server_list[prefer_server_type].find(item => item.server_id === prefer_server_id).server_index
-            
-
-            await options.browser_page.goto(encodeURI(`${options.domain}/watch/${encodeURIComponent(options.preview_id)}?ep=${encodeURIComponent(options.watch_id)}`));
+            const url = encodeURI(`${options.domain}/watch/${encodeURIComponent(options.preview_id)}?ep=${encodeURIComponent(options.watch_id)}`)
+            await options.browser_page.goto(url);
             
             await options.browser_page.evaluate((server_type,server_index)=>{
                 if (server_type) localStorage.setItem('currentSource', server_type.toString());
                 if (server_index) localStorage.setItem('v2.7_currentServer', server_index.toString());
-            }, prefer_server_type,selected_server_index)
-            
-            await options.browser_page.reload(); 
+            }, prefer_server_type,selected_server_index);
 
-            options.browser_page.removeAllListeners("request");
-            
-            const look_up_media_result = await new Promise((resolve) => {
-                const data = {};
-                let timeoutHandle;
-                const timeout = 8000;
-                options.browser_page.on('request', async (interceptedRequest) => {
-                    if (interceptedRequest.isInterceptResolutionHandled()) return;
+            await options.browser_page.goto('about:blank');
 
-                    const url = interceptedRequest.url();
+            const look_up_media_result = {};
 
-                    if (url.endsWith('.m3u8')) {
-                        const url_obj = new URL(url);
-                        const fileName = url_obj.pathname.split('/').pop().split('.').slice(0, -1).join('.');
-                        if (selected_server_index === 6){
-                            data.url = url;
-                            data.type = "player";
-                        }else{
-                            if (fileName === "master"){
-                                data.url = url;
-                                data.type = "master";
-                            }
-                        }
-                        
-                        clearTimeout(timeoutHandle);
-                        console.log(data);
-                        resolve({code:200, message:"Look up media success.", data}); 
+            options.browser_page.on('request', async (interceptedRequest) => {
+                if (interceptedRequest.isInterceptResolutionHandled()) return;
+                const url = interceptedRequest.url();
+                if (url.endsWith('.m3u8')) {
+                    const url_obj = new URL(url);
+                    const fileName = url_obj.pathname.split('/').pop().split('.').slice(0, -1).join('.');
+                    if (selected_server_index === 6){
+                        look_up_media_result.code = 200;
+                        look_up_media_result.data = {url, type: "player"};
                         options.browser_page.removeAllListeners("request");
+                    }else{
+                        if (fileName === "master"){
+                            look_up_media_result.code = 200;
+                            look_up_media_result.data = {url, type: "master"};
+                            options.browser_page.removeAllListeners("request");
+                        }
                     }
-                });
+                }
+            });
+
+            await options.browser_page.goto(url);
+
+
+            ;await new Promise(async (local_resolve) => {
+                
+                let timeoutHandle;
+                const timeout = 30000;
+
+                const check_interval = setInterval(() => {
+                    if (look_up_media_result.code === 200){
+                        clearInterval(check_interval);
+                        clearTimeout(timeoutHandle);
+                        local_resolve(true);
+                    }
+                },500);
+                
+                
                 timeoutHandle = setTimeout(() => {
+                    clearInterval(check_interval);
+
                     resolve({code:500, message:"Look up media timeout."}); 
+                    local_resolve(false);
                     options.browser_page.removeAllListeners("request");
                 }, timeout);
             });
+
+            
 
             
 
@@ -241,7 +248,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
 
             const media_result = look_up_media_result.data;
 
-            const watch_dir = path.join(options.cache_dir, "watch", options.source_id, options.preview_id, options.watch_id);
+            const watch_dir = path.join(options.cache_dir, "watch", options.source_id, options.preview_id, options.season_id, options.watch_id);
             if (!existsSync(watch_dir)) mkdirSync(watch_dir, { recursive: true });
 
             // Start converting master

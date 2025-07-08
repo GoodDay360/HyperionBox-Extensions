@@ -1,21 +1,25 @@
 import * as cheerio from 'cheerio';
-import fetch from "node-fetch";
 import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
-
+import AbortController from 'abort-controller';
 const get_list = async (options) => {
     
     try {
-        // https://hydrahd.sh/search/+/1
-        // const url = encodeURI(`${options.domain}/search?keyword=${encodeURIComponent(options.search||'+')}&page=${encodeURIComponent(options.page || 1)}`);
+        const controller = new AbortController();
+        let timeout = setTimeout(() => {
+            controller.abort(); 
+        }, 30000); 
+
         const url = encodeURI(`${options.domain}/search/${options.search.replace(/ /g, "+")||'+'}/${options.page || 1}`)
         console.log(url)
         const response = await fetch(url, {
+            signal: controller.signal,
             method: 'GET',
             headers: {
                 ...custom_fetch_headers,
                 'Referer': `${options.domain}/`,
             }
         });
+        clearTimeout(timeout);
 
         if (!response.ok) {
             return {code:500,message:response.statusText};

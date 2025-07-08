@@ -1,5 +1,4 @@
 import * as cheerio from 'cheerio';
-import fetch from "node-fetch";
 import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
 
 const get_list = async (options) => {

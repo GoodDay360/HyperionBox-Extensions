@@ -1,80 +1,37 @@
-import * as cheerio from 'cheerio';
-import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
-
-const get_episodes = async (options) => {
+const get_episodes = async ($) => {
     try{
-        const id = options.preview_id.split("-").pop();
-        const url = encodeURI(`${options.domain}/ajax/v2/episode/list/${id}`);
-        console.log(url)
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                ...custom_fetch_headers,
-                'Referer': `${options.domain}/`,
-            }
-        });
-
-        if (!response.ok) {
-            return {code:500,message:response.statusText};
-        }
-        
-
-        const request_result = await response.json()
-
-        if (!request_result.status) {
-            return {code:500, message:request_result.message};
-        }
-
-        const $ = cheerio.load(request_result.html);
-        const data = [];
-        
-        const main_container = $(".seasons-block")
-
-        let max_ep_page = 0;
-
-        const ep_pages_ele = main_container.find(".ss-choice").find(".dropdown-menu")
-
-        if (ep_pages_ele.html()){
-            max_ep_page = parseInt(ep_pages_ele.find("a").last().attr("data-page"));
+        const data = []
+        let type_schema;
+        const ep_selector = $("#epselector");
+        if (ep_selector.html()){
             
-
-            for (let i = 1; i <= max_ep_page; i++) {
-                const item_data = [];
-                const page_ele_li = main_container.find(`#episodes-page-${i}`)
-
-                page_ele_li.find("a").each((_, element) => {
-                    const ep_data = {};
-
-                    const ele = $(element);
-                    ep_data.index = parseInt(ele.attr("data-number"), 10);
-                    ep_data.title = ele.attr("title");
-                    ep_data.id = ele.attr("data-id");
-
-                    item_data.push(ep_data);
-                });
-
-                data.push(item_data);
-            }
-
+            ep_selector.find(".seasonContainer").each((_, element) => {
+                const ep_li = [];
+                const season_container = $(element);
+                season_container.find(".episodeList").find("a").each((index, element) => {
+                    const ep_info = {}
+                    const ep_ele = $(element);
+                    ep_info.index = index;
+                    ep_info.id = ep_ele.attr("data-episode");
+                    ep_info.title = ep_ele.find("span").text().replace(/\s+/g, ' ').trim().replace("/\n/g","");
+                    ep_li.push(ep_info);
+                })
+                data.push([ep_li]);
+            })
+            
+            type_schema = 2;
         }else{
-            const ss_list = main_container.find("#detail-ss-list").find(".ss-list");
-            const item_data = []
-            ss_list.find("a").each((_, element) => {
-                const ep_data = {};
+            data.push([[{
+                index: 1,
+                id: "full",
+                title: "Full",
+            }]])
 
-                const ele = $(element);
-                ep_data.index = parseInt(ele.attr("data-number"), 10);
-                ep_data.title = ele.attr("title");
-                ep_data.id = ele.attr("data-id");
-
-                item_data.push(ep_data);
-            });
-            
-            data.push(item_data);
+            type_schema = 1;
         }
 
         
-        return {code:200, message:"OK", result:[data]}
+        return {code:200, message:"OK", result:{data,type_schema}}
     }catch(e){
         console.error(e)
         return {code:500, message:e};

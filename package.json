@@ -8,6 +8,9 @@
   "description": "",
   "dependencies": {
     "@puppeteer/browsers": "^2.10.5",
+    "abort-controller": "^3.0.0",
+    "acorn": "^8.15.0",
+    "acorn-walk": "^8.3.4",
     "cheerio": "^1.1.0",
     "dayjs": "1.11.13",
     "find-free-ports": "3.1.1",

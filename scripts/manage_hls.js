@@ -1,9 +1,8 @@
-import fetch from "node-fetch";
 import { Parser } from 'm3u8-parser';
 import {  writeFileSync } from 'fs';
 import path from 'path';
 import custom_fetch_headers from "./custom_fetch_headers.js";
-
+import AbortController from "abort-controller";
 const rephrase_player = ({data, referer, route, options}) => {
 
     // Parse the M3U8 content
@@ -42,13 +41,19 @@ const rephrase_player = ({data, referer, route, options}) => {
 
 export const convert_player = async ({url, referer, route, output, options}) =>{
     try {
+        const controller = new AbortController();
+        let timeout = setTimeout(() => {
+            controller.abort(); 
+        }, 30000); 
         const response = await fetch(url, {
+            signal: controller.signal,
             method: 'GET',
             headers: {
                 ...custom_fetch_headers,
                 'Referer': referer,
             }
         });
+        clearTimeout(timeout);
 
         if (!response.ok) {
             throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
@@ -68,7 +73,7 @@ export const convert_player = async ({url, referer, route, output, options}) =>{
         }
 
     } catch (error) {
-        console.error('Error fetching M3U8 file:', error.message);
+        console.error(`[manage_hls->convert_player] Error fetching M3U8 url: ${url}`, error.message);
         return {code: 500, message: error.message}
         
     }
@@ -87,8 +92,7 @@ export const convert_master = async ({url, master_referer, player_referer, maste
         
 
         if (!response.ok) {
-            resolve({code:500,message:response.statusText});
-            return;
+            return {code:500,message:response.statusText};
         }
         
         
@@ -103,10 +107,12 @@ export const convert_master = async ({url, master_referer, player_referer, maste
         
         const playlist = []
 
+        let player_count = 0;
         for (const players of parser.manifest.playlists){
             const url = `${master_route}/${players.uri}`;
             
-            const player_path = path.join(output_dir, players.uri)
+            const player_path = path.join(output_dir, `index_${player_count}.m3u8`);
+            
             const proxy_convert_player_result = await convert_player({
                 url: url,
                 referer: player_referer,
@@ -116,11 +122,13 @@ export const convert_master = async ({url, master_referer, player_referer, maste
             })
 
             if (proxy_convert_player_result?.code !== 200) {
-                resolve(proxy_convert_player_result);
-                return;
+                return proxy_convert_player_result;
+                
             }
 
             playlist.push(player_path);
+            
+            player_count++;
         }
 
         const splited_raw_master = request_result.split("\n");

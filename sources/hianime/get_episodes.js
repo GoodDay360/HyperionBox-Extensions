@@ -42,11 +42,11 @@ const get_episodes = async (options) => {
                 const item_data = [];
                 const page_ele_li = main_container.find(`#episodes-page-${i}`)
 
-                page_ele_li.find("a").each((_, element) => {
+                page_ele_li.find("a").each((index, element) => {
                     const ep_data = {};
 
                     const ele = $(element);
-                    ep_data.index = parseInt(ele.attr("data-number"), 10);
+                    ep_data.index = index;
                     ep_data.title = ele.attr("title");
                     ep_data.id = ele.attr("data-id");
 

@@ -1,6 +1,7 @@
-import get_episodes from './get_episodes.js';
 import * as cheerio from 'cheerio';
 import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
+import get_episodes from './get_episodes.js';
+import AbortController from 'abort-controller';
 
 const get_preview = async (options) => {
     if (!options.preview_id) {
@@ -8,25 +9,32 @@ const get_preview = async (options) => {
         return {code:500, message: "Missing 'preview_id' key."};
     }
     try {
+
+        const controller = new AbortController();
+        let timeout = setTimeout(() => {
+            controller.abort(); 
+        }, 30000); 
         
         const url = encodeURI(`${options.domain}/${options.preview_id.replace("+","/")}`);
-        console.log(url)
+        
         const response = await fetch(url, {
+            signal: controller.signal,
             method: 'GET',
             headers: {
                 ...custom_fetch_headers,
                 'Referer': `${options.domain}/`,
             }
         });
+        clearTimeout(timeout);
 
         if (!response.ok) {
             return {code:500,message:response.statusText};
         }
         
-        const data = {};
-        
-
+    
         const $ = cheerio.load(await response.text());
+
+        const data = {};
 
         // No stats
         data.stats = {};
@@ -51,36 +59,16 @@ const get_preview = async (options) => {
         // ========
 
         // Get episodes
-        data.episodes = []
-        const ep_selector = $("#epselector");
-        if (ep_selector.html()){
-            
-            ep_selector.find(".seasonContainer").each((_, element) => {
-                const ep_li = [];
-                const season_container = $(element);
-                season_container.find(".episodeList").find("a").each((__, element) => {
-                    const ep_info = {}
-                    const ep_ele = $(element);
-                    ep_info.index = ep_ele.attr("data-episode");
-                    ep_info.id = ep_ele.attr("data-episode");
-                    ep_info.title = ep_ele.find("span").text().replace(/\s+/g, ' ').trim().replace("/\n/g","");
-                    ep_li.push(ep_info);
-                })
-                data.episodes.push([ep_li]);
-            })
-            
-            data.type_schema = 2;
-        }else{
-            data.episodes.push([[{
-                index: 1,
-                id: options.preview_id,
-                title: "Full",
-            }]])
-
-            data.type_schema = 1;
+        const get_episodes_result = await get_episodes($);
+        if (get_episodes_result.code !== 200) {
+            return get_episodes_result;
         }
 
+        data.episodes = get_episodes_result.result.data;
+        data.type_schema = get_episodes_result.result.type_schema;
+        
 
+        // ========
         console.log(data);
         return {code:200, message:"OK", result:data};
     }catch (error) {
