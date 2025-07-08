@@ -85,6 +85,7 @@ const get_preview = async (options) => {
         data.episodes = get_ep_result.result;
 
         data.type_schema = 1;
+        data.server_type_schema = 1;
         return {code:200, message:"OK", result:data};
     }catch (error) {
         console.error(error);

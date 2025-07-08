@@ -66,7 +66,7 @@ const get_preview = async (options) => {
 
         data.episodes = get_episodes_result.result.data;
         data.type_schema = get_episodes_result.result.type_schema;
-        
+        data.server_type_schema = 2;
 
         // ========
         console.log(data);
