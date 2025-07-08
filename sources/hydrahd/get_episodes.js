@@ -22,7 +22,7 @@ const get_episodes = async ($) => {
             type_schema = 2;
         }else{
             data.push([[{
-                index: 1,
+                index: 0,
                 id: "full",
                 title: "Full",
             }]])
@@ -35,7 +35,7 @@ const get_episodes = async ($) => {
     }catch(e){
         console.error(e)
         return {code:500, message:e};
-    }fi
+    }
 }
 
 export default get_episodes;

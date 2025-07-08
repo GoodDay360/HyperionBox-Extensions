@@ -78,7 +78,7 @@ const get_episodes = async (options) => {
     }catch(e){
         console.error(e)
         return {code:500, message:e};
-    }fi
+    }
 }
 
 export default get_episodes;
