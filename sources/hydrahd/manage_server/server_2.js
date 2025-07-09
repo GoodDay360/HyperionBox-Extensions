@@ -210,7 +210,7 @@ const server_2 = async ({server_id, server_link, options})=>{return await new Pr
         ;await new Promise(async (local_resolve) => {
             
             let timeoutHandle;
-            const timeout = 8000;
+            const timeout = 10000;
 
             const check_interval = setInterval(() => {
                 if (look_up_media_result.code === 200){
