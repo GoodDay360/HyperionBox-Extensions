@@ -205,12 +205,12 @@ const server_2 = async ({server_id, server_link, options})=>{return await new Pr
             }
         });
 
-        await options.browser_page.goto(forward_url_2);
+        await options.browser_page.goto(forward_url_2, { waitUntil: 'load', timeout: 30000 });
         
         ;await new Promise(async (local_resolve) => {
             
             let timeoutHandle;
-            const timeout = 10000;
+            const timeout = 30000;
 
             const check_interval = setInterval(() => {
                 if (look_up_media_result.code === 200){

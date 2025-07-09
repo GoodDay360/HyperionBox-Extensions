@@ -181,14 +181,14 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
 
             const selected_server_index = data.server_info.server_list[prefer_server_type].find(item => item.server_id === prefer_server_id).server_index
             const url = encodeURI(`${options.domain}/watch/${encodeURIComponent(options.preview_id)}?ep=${encodeURIComponent(options.watch_id)}`)
-            await options.browser_page.goto(url, { waitUntil: 'load', timeout: 10000 });
+            await options.browser_page.goto(url, { waitUntil: 'load', timeout: 30000 });
             
             await options.browser_page.evaluate((server_type,server_index)=>{
                 if (server_type) localStorage.setItem('currentSource', server_type.toString());
                 if (server_index) localStorage.setItem('v2.7_currentServer', server_index.toString());
             }, prefer_server_type,selected_server_index);
 
-            await options.browser_page.goto('about:blank', { waitUntil: 'load', timeout: 10000 });
+            await options.browser_page.goto('about:blank', { waitUntil: 'load', timeout: 30000 });
 
             const look_up_media_result = {};
 
@@ -213,13 +213,13 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                 }
             });
 
-            await options.browser_page.goto(url, { waitUntil: 'load', timeout: 10000 });
+            await options.browser_page.goto(url, { waitUntil: 'load', timeout: 30000 });
 
 
             ;await new Promise(async (local_resolve) => {
                 
                 let timeoutHandle;
-                const timeout = 10000;
+                const timeout = 30000;
 
                 const check_interval = setInterval(() => {
                     if (look_up_media_result.code === 200){
