@@ -4,7 +4,7 @@
         "domain": "https://hianime.to",
         "icon": "https://hianime.to/favicon.ico",
         "title": "HiAnime",
-        "version": "1.0.6",
+        "version": "1.0.7",
         "description": "Extension source for 'hianime.to'"
     },
     "hydrahd": {
