@@ -8,7 +8,8 @@ import manage_server from './manage_server/main.js';
 import AbortController from 'abort-controller';
 
 
-
+const SUPPORTED_SERVER_ID = ["2", "3"];
+const RECOMMENDED_SERVER_ID = "3";
 
 const get_watch = async (options) => { return await new Promise(async (resolve) => {
     
@@ -81,7 +82,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         data.server_info.server_list = {};
         const server_list = data.server_info.server_list.server = [];
 
-        const SUPPORTED_SERVER_ID = ["2"]
+        
 
         // Get server info
         ;await (async () => {
@@ -150,13 +151,17 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
 
         if (options.server_id) {
             if (!data.server_info.server_list.server.find(item => item.server_id === options.server_id)) {
-                prefer_server_id = data.server_info.server_list.server[0].server_id;
+                const reccomended_server_index = data.server_info.server_list.server.findIndex(item => item.server_id === RECOMMENDED_SERVER_ID);
+                prefer_server_id = data.server_info.server_list.server[reccomended_server_index??0].server_id;
+                console.log(prefer_server_id);
             }else{
                 prefer_server_id = options.server_id;
             }
             
         }else{
-            prefer_server_id = data.server_info.server_list.server[0].server_id;
+            const reccomended_server_index = data.server_info.server_list.server.findIndex(item => item.server_id === RECOMMENDED_SERVER_ID);
+            prefer_server_id = data.server_info.server_list.server[reccomended_server_index??0].server_id;
+            console.log(prefer_server_id);
         }
 
         
@@ -170,7 +175,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
 
         ;await (async () => {
             const manage_server_result = await manage_server({server_id:prefer_server_id, server_link:prefer_server_link, options});
-            console.log(manage_server_result);
+            
 
             if (manage_server_result.code !== 200){
                 resolve(manage_server_result);

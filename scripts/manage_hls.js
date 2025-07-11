@@ -15,7 +15,7 @@ const rephrase_player = ({data, referer, route, options}) => {
 
     // Replace segment URIs with full URLs
     parsedManifest.segments.forEach((segment) => {
-        segment.uri = encodeURI(`http://localhost:${options.port}/proxy_request/?referer=${encodeURIComponent(referer)}&url=${encodeURIComponent(route ? `${route}/${segment.uri}` : segment.uri)}`);
+        segment.uri = encodeURI(`http://localhost:${options.port}/proxy_request/?referer=${encodeURIComponent(referer)}&url=${encodeURIComponent(route ? `${route}${segment.uri}` : segment.uri)}`);
     });
 
     // Collect headers until the first #EXTINF tag
@@ -109,7 +109,7 @@ export const convert_master = async ({url, master_referer, player_referer, maste
 
         let player_count = 0;
         for (const players of parser.manifest.playlists){
-            const url = `${master_route}/${players.uri}`;
+            const url = `${master_route}${players.uri}`;
             
             const player_path = path.join(output_dir, `index_${player_count}.m3u8`);
             
@@ -122,24 +122,43 @@ export const convert_master = async ({url, master_referer, player_referer, maste
             })
 
             if (proxy_convert_player_result?.code !== 200) {
-                return proxy_convert_player_result;
-                
+                playlist.push(null);
+            }else{
+                playlist.push(player_path);
+                player_count++;
             }
 
-            playlist.push(player_path);
             
-            player_count++;
+        }
+
+        if (player_count === 0) {
+            return {code:500, message:"No playlist found"};
         }
 
         const splited_raw_master = request_result.split("\n");
 
         let count = 0;
+        let last_check_line = "";
         for (const line of splited_raw_master){
             if (line.charAt(0) === "#" || !line) {
-                new_master_content += line + "\n";
+                if (last_check_line){
+                    new_master_content += last_check_line;
+                }
+                last_check_line = line + "\n";
+                
             }else{
-                new_master_content +=  playlist[count] + "\n";
-                count++;
+                console.log(playlist[count])
+                if (playlist[count] !== null) {
+                    if (last_check_line){
+                        new_master_content += last_check_line;
+                        last_check_line = "";
+                    }
+                    new_master_content +=  playlist[count] + "\n";
+                    count++;
+                }else{
+                    last_check_line = "";
+                    count++;
+                }
             }
         }
         writeFileSync(master_path, new_master_content, { flag: 'w' }, (err) => {

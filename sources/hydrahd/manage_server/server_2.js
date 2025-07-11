@@ -7,16 +7,11 @@ import AbortController from 'abort-controller';
 
 import { parse } from 'acorn';
 import * as walk from 'acorn-walk'
-import { clear } from 'console';
 
 const server_2 = async ({server_id, server_link, options})=>{return await new Promise(async (resolve) => {
     
 
-    console.log("server_link is:", server_link)
-    
     const data = {}
-
-    
 
     let forward_url_1 = "";
     // Extract forwarded url #1
@@ -205,6 +200,10 @@ const server_2 = async ({server_id, server_link, options})=>{return await new Pr
             }
         });
 
+
+
+        await options.browser_page.setExtraHTTPHeaders({ referer: `https://${forward_domain}/` });
+
         await options.browser_page.goto(forward_url_2, { waitUntil: 'load', timeout: 30000 });
         
         ;await new Promise(async (local_resolve) => {
@@ -255,8 +254,7 @@ const server_2 = async ({server_id, server_link, options})=>{return await new Pr
         if (media_result.type === "master"){
             const master_path = path.join(watch_dir, "master.m3u8");
             const master_doamin =  new URL(media_result.url).hostname;
-            console.log("master_doamin: ",`https://${master_doamin}`);
-            console.log("media_result: ",media_result);
+            
             const convert_master_result = await convert_master({
                 url: media_result.url,
                 master_referer: `https://${forward_domain}/`,

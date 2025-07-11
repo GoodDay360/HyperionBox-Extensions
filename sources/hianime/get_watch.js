@@ -291,8 +291,8 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                     url: media_result.url,
                     master_referer: "https://megacloud.blog/",
                     player_referer: "https://megacloud.blog/",
-                    master_route: media_result.url.split("/").slice(0, -1).join("/"),
-                    player_route: selected_server_index === 1 ? media_result.url.split("/").slice(0, -1).join("/") : "",
+                    master_route: `${media_result.url.split("/").slice(0, -1).join("/")}/`,
+                    player_route: selected_server_index === 1 ? `${media_result.url.split("/").slice(0, -1).join("/")}/` : "",
                     output_dir: watch_dir,
                     options
                 })
