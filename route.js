@@ -8,6 +8,11 @@ import normalizeUrl from 'normalize-url';
 import proxy_request from './scripts/proxy_request.js';
 import { initiate_puppeteer } from './setup/initiate_puppeteer.js';
 import request_source from './setup/request_source.js';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+
+dayjs.extend(utc);
+
 
 const BASE_DIRECTORY = dirname(fileURLToPath(import.meta.url))
 
@@ -50,11 +55,21 @@ let REQUEST_EXTENSION_TIMEOUT = false;
 
 
 // Setup config for request_download endpoints
-let REQUEST_DOWNLOAD_BROWSER;
-const initiate_puppeteer_for_request_download = await initiate_puppeteer(args.browser_path);
-if (initiate_puppeteer_for_request_download.code != 200) throw (initiate_puppeteer_for_request_download.message);
-else {REQUEST_DOWNLOAD_BROWSER=initiate_puppeteer_for_request_download.browser};
+let REQUEST_DOWNLOAD_BROWSER = null;
 let REQUEST_DOWNLOAD_TIMEOUT = false;
+let IS_LOADING_DOWNLOAD_BROWSER = false;
+let LAST_USE_DOWNLOAD_BROWSER_TIMESTAMP = null; // In minutes
+setInterval(async () => {
+    const current_timestamp = Math.floor(dayjs().valueOf() / (1000 * 60));
+    if (!LAST_USE_DOWNLOAD_BROWSER_TIMESTAMP) return;
+    if ((current_timestamp - LAST_USE_DOWNLOAD_BROWSER_TIMESTAMP) > 30){ // Shutdown after 30 minutes
+        console.log("Shutting down headless brwoser for getting download info after not use for so long...")
+        LAST_USE_DOWNLOAD_BROWSER_TIMESTAMP = null;
+        await REQUEST_DOWNLOAD_BROWSER.close();
+        REQUEST_DOWNLOAD_BROWSER = null;
+        
+    }
+},[5000])
 // ==================
 
 
@@ -158,6 +173,37 @@ let REQUEST_DOWNLOAD_TIMEOUT = false;
                     // if (fs.existsSync(options.cache_dir)) fs.rmSync(options.cache_dir, { recursive: true });
                     
                     try {
+                        
+
+                        if ((REQUEST_DOWNLOAD_BROWSER === null) && !IS_LOADING_DOWNLOAD_BROWSER){
+                            console.log("Booting headless brwoser for getting download info...")
+                            IS_LOADING_DOWNLOAD_BROWSER = true;
+                            const initiate_puppeteer_for_request_download = await initiate_puppeteer(args.browser_path);
+                            if (initiate_puppeteer_for_request_download.code != 200) throw (initiate_puppeteer_for_request_download.message);
+                            else {REQUEST_DOWNLOAD_BROWSER=initiate_puppeteer_for_request_download.browser};
+                            IS_LOADING_DOWNLOAD_BROWSER = false;
+                            console.log("Boot headless brwoser for getting download info done!")
+                        }
+
+                        const start_timestamp = Math.floor(dayjs().valueOf() / (1000 * 60));
+                        await new Promise((resolve) => {
+                            const interval = setInterval(() => {
+                                const current_timestamp = Math.floor(dayjs().valueOf() / (1000 * 60));
+                                if (current_timestamp - start_timestamp > 3) {
+                                    clearInterval(interval);
+                                    res.writeHead(500, { 'Content-Type': 'text/plain' });
+                                    res.end(`Timeout waiting for headless brwoser for getting download info! `);
+
+                                }
+                                if (REQUEST_DOWNLOAD_BROWSER !== null) {
+                                    clearInterval(interval);
+                                    resolve();
+                                }
+                            }, 500);
+                        })
+                        LAST_USE_DOWNLOAD_BROWSER_TIMESTAMP = Math.floor(dayjs().valueOf() / (1000 * 60));
+
+
                         await request_source({options,response:res,browser:REQUEST_EXTENSION_BROWSER,request_timeout:REQUEST_EXTENSION_TIMEOUT})
                     }catch (error) {
                         console.error('Error in request_extension route:', error.message);
