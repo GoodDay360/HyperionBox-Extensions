@@ -78,7 +78,7 @@ setInterval(async () => {
         const parsed_url = url.parse(normalizeUrl(`http://${req.headers.host}${req.url}`, { removeTrailingSlash: true }), true);
         res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins (or specify your domain)
         res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS'); // Allow specific methods
-        res.setHeader('Access-Control-Allow-Headers', res.setHeader('Access-Control-Allow-Headers', [
+        res.setHeader('Access-Control-Allow-Headers', [
             'Content-Type',
             'Accept',
             'Authorization',
@@ -87,11 +87,8 @@ setInterval(async () => {
             'Referer',
             'User-Agent',
             'Cache-Control',
-            'If-None-Match',
-            'Access-Control-Allow-Origin',
-            'Access-Control-Allow-Credentials',
-            'Access-Control-Request-Headers'
-        ].join(', ')));
+            'If-None-Match'
+        ].join(', '));
         if (req.method === 'OPTIONS') {
             res.writeHead(200); // HTTP OK
             res.end();
