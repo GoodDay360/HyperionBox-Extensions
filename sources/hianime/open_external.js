@@ -10,13 +10,13 @@ const open_external = async (options) =>{
             url = encodeURI(`${options.domain}/${encodeURIComponent(options.preview_id)}`);
         }
         
-
+        console.log(options.browser_path)
         const initiate_result = await initiate_puppeteer(options.browser_path, false);
-        if (initiate_result.code == 200) {
+        if (initiate_result.code === 200) {
             const result_load_new_page = await load_new_page(initiate_result.browser);
             if (result_load_new_page.code === 200){
                 const browser_page = result_load_new_page.browser_page;
-                browser_page.goto(url, { waitUntil: 'networkidle0' });
+                browser_page.goto(url);
                 
                 return {code:200, message:"Open successfully"}
             }else{

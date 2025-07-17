@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 
 
-export const initiate_puppeteer = async (browser_path, headless=true) => {
+export const initiate_puppeteer = async (browser_path, headless=false) => {
     if (!browser_path) {
         console.error("Missing 'browser_path' argument."); 
         return {code:500, message: "Missing 'browser_path' argument."};

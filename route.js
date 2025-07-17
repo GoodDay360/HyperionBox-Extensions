@@ -238,7 +238,7 @@ setInterval(async () => {
                         options.cache_dir = options.cache_dir || path.join(options.BASE_DIRECTORY, ".download_cache");
                         options.port = PORT
 
-                        await request_source({options,response:res,browser:REQUEST_DOWNLOAD_BROWSER,request_timeout:REQUEST_DOWNLOAD_TIMEOUT})
+                        await request_source({options,response:res,request_timeout:REQUEST_DOWNLOAD_TIMEOUT})
                     } catch (error) {
                         console.error('Error in request_open_external route:', error.message);
                         res.writeHead(500, { 'Content-Type': 'text/plain' });

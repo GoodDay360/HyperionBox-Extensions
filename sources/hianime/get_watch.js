@@ -4,6 +4,8 @@ import { convert_master, convert_player } from '../../scripts/manage_hls.js';
 import * as cheerio from 'cheerio';
 import custom_fetch_headers from '../../scripts/custom_fetch_headers.js';
 import get_episodes from './get_episodes.js';
+import { load_new_page } from '../../setup/initiate_puppeteer.js';
+
 
 const get_watch = async (options) => { return await new Promise(async (resolve) => {
     
@@ -33,6 +35,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             
 
             if (!response.ok) {
+                console.error(`Failed to fetch: ${url}`);
                 resolve({code:500,message:response.statusText});
                 return;
             }
@@ -41,6 +44,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             const request_result = await response.json()
             
             if (!request_result.status) {
+                console.error(`Failed to fetch: ${request_result}`);
                 resolve({code:500, message:request_result.message});
                 return;
             }
@@ -121,6 +125,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             
 
             if (!response.ok) {
+                console.error(`Failed to fetch: ${url}`);
                 resolve({code:500,message:response.statusText});
                 return;
             }
@@ -129,6 +134,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             const request_result = await response.json()
             
             if (!request_result.type === "error") {
+                console.error(`Error unable to get prefered_server_id: ${prefer_server_id}`)
                 resolve({code:500, message:`Error unable to get prefered_server_id: ${prefer_server_id}`});
                 return;
             }
@@ -142,7 +148,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         // Get tracks
         data.media_info = {};
         ;await ((async () => {
-            const url = encodeURI(`https://megacloud.blog/embed-2/v2/e-1/getSources?id=${forward_source_id}`);
+            const url = encodeURI(`https://megacloud.blog/embed-2/v3/e-1/getSources?id=${forward_source_id}`);
 
             const response = await fetch(url, {
                 method: 'GET',
@@ -155,6 +161,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             
 
             if (!response.ok) {
+                console.error(`Failed to fetch: ${url}`);
                 resolve({code:500,message:response.statusText});
                 return;
             }
@@ -174,6 +181,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             }
         }))();
         // ===================
+        if (Object.keys(data.media_info).length === 0) return;
 
         // Get forward url
         let forward_url = "";
@@ -191,6 +199,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             
 
             if (!response.ok) {
+                console.error(`Failed to fetch: ${url}`);
                 resolve({code:500,message:response.statusText});
                 return;
             }
@@ -202,6 +211,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         }))();
 
         if (!forward_url) {
+            console.error(`Error unable to get forwarded_url.`)
             resolve({code:500, message:`Error unable to get forwarded_url.`});
             return;
         }
@@ -215,6 +225,15 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             
             
             const look_up_media_result = {};
+
+            const result_load_new_page = await load_new_page(options.browser);
+            if (result_load_new_page.code === 200){
+                options.browser_page = result_load_new_page.browser_page;
+            }else{
+                console.error("Fail to load new page");
+                resolve({code:500, message:"Fail to load new page"})
+                return;
+            }
 
 
             options.browser_page.on('request', async (interceptedRequest) => {
@@ -260,18 +279,16 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                 
                 timeoutHandle = setTimeout(() => {
                     clearInterval(check_interval);
-
+                    console.error("Look up media timeout.");
                     resolve({code:500, message:"Look up media timeout."}); 
                     local_resolve(false);
                     options.browser_page.removeAllListeners("request");
                 }, timeout);
             });
 
-            
-
-            
 
             if (look_up_media_result.code !== 200) {
+                console.error(`Error look up media source: ${JSON.stringify(look_up_media_result)}`)
                 resolve(look_up_media_result);
                 return;
             }
