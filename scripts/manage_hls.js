@@ -3,7 +3,7 @@ import {  writeFileSync } from 'fs';
 import path from 'path';
 import custom_fetch_headers from "./custom_fetch_headers.js";
 import AbortController from "abort-controller";
-const rephrase_player = ({data, referer, route, options}) => {
+const rephrase_player = ({data, origin="" ,referer="", route, options}) => {
 
     // Parse the M3U8 content
     const parser = new Parser();
@@ -15,7 +15,7 @@ const rephrase_player = ({data, referer, route, options}) => {
 
     // Replace segment URIs with full URLs
     parsedManifest.segments.forEach((segment) => {
-        segment.uri = encodeURI(`http://localhost:${options.port}/proxy_request/?referer=${encodeURIComponent(referer)}&url=${encodeURIComponent(route ? `${route}${segment.uri}` : segment.uri)}`);
+        segment.uri = encodeURI(`http://localhost:${options.port}/proxy_request/?forward_origin=${encodeURIComponent(origin)}&forward_referer=${encodeURIComponent(referer)}&url=${encodeURIComponent(route ? `${route}${segment.uri}` : segment.uri)}`);
     });
 
     // Collect headers until the first #EXTINF tag
@@ -39,7 +39,7 @@ const rephrase_player = ({data, referer, route, options}) => {
 }
 
 
-export const convert_player = async ({url, referer, route, output, options}) =>{
+export const convert_player = async ({url, origin="", referer="", route, output, options}) =>{
     try {
         const controller = new AbortController();
         let timeout = setTimeout(() => {
@@ -51,6 +51,7 @@ export const convert_player = async ({url, referer, route, output, options}) =>{
             headers: {
                 ...custom_fetch_headers,
                 'Referer': referer,
+                'Origin': origin,
             }
         });
         clearTimeout(timeout);
@@ -60,7 +61,7 @@ export const convert_player = async ({url, referer, route, output, options}) =>{
         }
 
         const content = await response.text();  
-        const rephrase_content = rephrase_player({data: content, referer, route, options});
+        const rephrase_content = rephrase_player({data: content, origin, referer, route, options});
         try {
             writeFileSync(output, rephrase_content, { flag: 'w' }, (err) => {
                 if (err) throw err;
@@ -79,13 +80,19 @@ export const convert_player = async ({url, referer, route, output, options}) =>{
     }
 }
 
-export const convert_master = async ({url, master_referer, player_referer, master_route, player_route, output_dir, options}) => {
+export const convert_master = async ({
+    url, 
+    master_origin="", player_origin="",
+    master_referer, player_referer,
+    master_route, player_route,
+    output_dir, options}) => {
     try {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 ...custom_fetch_headers,
                 'Referer':  master_referer,
+                'Origin': master_origin,
             }
         });
 
@@ -115,6 +122,7 @@ export const convert_master = async ({url, master_referer, player_referer, maste
             
             const proxy_convert_player_result = await convert_player({
                 url: url,
+                origin: player_origin,
                 referer: player_referer,
                 route: player_route||"",
                 output: player_path,

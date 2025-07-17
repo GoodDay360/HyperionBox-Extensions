@@ -2,9 +2,10 @@ import custom_fetch_headers from "./custom_fetch_headers.js";
 import AbortController from 'abort-controller';
 import fetch from "node-fetch";
 
-const proxy_request = async ({ url, referer, headers }) => {
+const proxy_request = async ({ url, origin="",referer="", headers }) => {
     try {
         console.log("=================")
+        console.log("Proxy origin: ", origin);
         console.log("Proxy referer: ", referer);
         console.log("Proxy url: ",url);
         console.log("=================")
@@ -38,6 +39,7 @@ const proxy_request = async ({ url, referer, headers }) => {
             headers: {
                 ...sanitizedHeaders, 
                 ...custom_fetch_headers,
+                'Origin': origin,
                 'Referer': referer,
             }
         });

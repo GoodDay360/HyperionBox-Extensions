@@ -110,7 +110,8 @@ setInterval(async () => {
                             try{
                                 const { bodyStream, headers } = await proxy_request({
                                     url: parsed_url.query.url,
-                                    referer: parsed_url.query.referer,
+                                    origin: parsed_url.query.forward_origin,
+                                    referer: parsed_url.query.forward_referer,
                                     headers: incomingHeaders // Forward incoming headers to the proxy function
                                 });
                                 // Forward response headers

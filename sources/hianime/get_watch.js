@@ -104,7 +104,8 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         
         data.server_info.current_server_id = prefer_server_id;
         data.server_info.current_server_type = prefer_server_type;
-
+        console.log(options.server_id);
+        console.log(data.server_info.server_list)
         // ====================
         
 
@@ -119,6 +120,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                 headers: {
                     ...custom_fetch_headers,
                     'Referer': `${options.domain}/`,
+                    'Origin': `${options.domain}`,
                 }
             });
 
@@ -155,6 +157,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                 headers: {
                     ...custom_fetch_headers,
                     'Referer': `${options.domain}/`,
+                    'Origin': `${options.domain}`,
                 }
             });
 
@@ -193,6 +196,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                 headers: {
                     ...custom_fetch_headers,
                     'Referer': `${options.domain}/`,
+                    'Origin': `${options.domain}`,
                 }
             });
 
@@ -306,7 +310,9 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
 
                 const convert_master_result = await convert_master({
                     url: media_result.url,
+                    master_origin: "https://megacloud.blog",
                     master_referer: "https://megacloud.blog/",
+                    player_origin: "https://megacloud.blog",
                     player_referer: "https://megacloud.blog/",
                     master_route: `${media_result.url.split("/").slice(0, -1).join("/")}/`,
                     player_route: selected_server_index === 1 ? `${media_result.url.split("/").slice(0, -1).join("/")}/` : "",
@@ -328,6 +334,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
                 const player_path = path.join(watch_dir, "player.m3u8");
                 const proxy_convert_player_result = await convert_player({
                     url: media_result.url,
+                    origin: "https://megacloud.blog",
                     referer: "https://megacloud.blog/",
                     route: ``,
                     output: player_path,
