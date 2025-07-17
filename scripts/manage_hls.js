@@ -45,14 +45,17 @@ export const convert_player = async ({url, origin="", referer="", route, output,
         let timeout = setTimeout(() => {
             controller.abort(); 
         }, 30000); 
+        const forward_headers = {
+            ...custom_fetch_headers,
+        }
+
+        if (origin) forward_headers['Origin'] = origin;
+        if (referer) forward_headers['Referer'] = referer;
+        
         const response = await fetch(url, {
             signal: controller.signal,
             method: 'GET',
-            headers: {
-                ...custom_fetch_headers,
-                'Referer': referer,
-                'Origin': origin,
-            }
+            headers: forward_headers
         });
         clearTimeout(timeout);
 
@@ -82,18 +85,22 @@ export const convert_player = async ({url, origin="", referer="", route, output,
 
 export const convert_master = async ({
     url, 
-    master_origin="", player_origin="",
-    master_referer, player_referer,
+    master_origin="", master_referer,
+    player_origin="", player_referer,
     master_route, player_route,
     output_dir, options}) => {
     try {
+
+        const forward_headers = {
+            ...custom_fetch_headers,
+        }
+
+        if (master_origin) forward_headers['Origin'] = master_origin;
+        if (master_referer) forward_headers['Referer'] = master_referer;
+
         const response = await fetch(url, {
             method: 'GET',
-            headers: {
-                ...custom_fetch_headers,
-                'Referer':  master_referer,
-                'Origin': master_origin,
-            }
+            headers: forward_headers,
         });
 
         

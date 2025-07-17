@@ -32,16 +32,18 @@ const proxy_request = async ({ url, origin="",referer="", headers }) => {
         let timeout = setTimeout(() => {
             controller.abort(); 
         }, 30000); 
+
+        const forward_headers = {
+            ...sanitizedHeaders, 
+            ...custom_fetch_headers
+        }
+        if (origin) forward_headers['Origin'] = origin;
+        if (referer) forward_headers['Referer'] = referer;
         
         const response = await fetch(url, {
             signal: controller.signal,
             method: 'GET',
-            headers: {
-                ...sanitizedHeaders, 
-                ...custom_fetch_headers,
-                'Origin': origin,
-                'Referer': referer,
-            }
+            headers: forward_headers
         });
         clearTimeout(timeout);
 

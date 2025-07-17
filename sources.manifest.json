@@ -4,7 +4,7 @@
         "domain": "https://hianime.to",
         "icon": "https://hianime.to/favicon.ico",
         "title": "HiAnime",
-        "version": "1.0.8",
+        "version": "1.0.9",
         "description": "Extension source for 'hianime.to'"
     },
     "hydrahd": {
@@ -12,7 +12,7 @@
         "domain": "https://hydrahd.sh",
         "icon": "https://hydrahd.sh/favicon.ico",
         "title": "HydraHD",
-        "version": "1.0.4",
+        "version": "1.0.5",
         "description": "Extension source for 'hydrahd.sh'"
     }
 }
