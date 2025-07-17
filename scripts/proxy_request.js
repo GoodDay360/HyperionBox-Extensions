@@ -54,6 +54,10 @@ const proxy_request = async ({ url, origin="",referer="", headers }) => {
 
         const responseHeaders = Object.fromEntries(response.headers.entries());
         delete responseHeaders['content-encoding'];
+        delete responseHeaders['origin'];
+        delete responseHeaders['referer'];
+        delete responseHeaders['access-control-allow-origin']
+        console.log(responseHeaders)
 
         const bodyStream = response.body;
 
