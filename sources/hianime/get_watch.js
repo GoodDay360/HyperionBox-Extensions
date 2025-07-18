@@ -171,27 +171,36 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
             
             
             const request_result = await response.text()
-            const $ = cheerio.load(request_result);
-
+            const $ = cheerio.load(request_result, { decodeEntities: false });
+            
             forward_key_token =
                 $('meta[name="_gg_fb"]').attr('content') ||
                 $('script[nonce]').attr('nonce') ||
                 $('div[data-dpi]').attr('data-dpi') ||
-                $('script').filter((_, el) => $(el).html().includes('window._xy_ws')).map((_, el) =>
-                    $(el).html().split('"')[1]
-                ).get(0) ||
-                $('*').contents().filter((_, el) =>
-                    el.type === 'comment' && el.data.startsWith('_is_th:')
-                ).map((_, el) => el.data.split(':')[1].trim()).get(0) ||
-                $('script').map((_, el) => {
+                $('script')
+                    .filter((_, el) => $(el).html().includes('window._xy_ws'))
+                    .map((_, el) => $(el).html().split('"')[1])
+                    .get(0) ||
+                $('*')
+                    .contents()
+                    .filter((_, el) => el.type === 'comment' && el.data.trim().startsWith('_is_th:'))
+                    .map((_, el) => el.data.trim().split(':')[1])
+                    .get(0) ||
+                $('script')
+                    .map((_, el) => {
                     const js = $(el).html();
-                    if (js.includes('window._lk_db')) {
-                    try {
-                        const obj = eval(js.match(/window\._lk_db\s*=\s*({[^}]+})/)[1]);
+                    const match = js.match(/window\._lk_db\s*=\s*{[^}]*}/);
+                    if (match) {
+                        try {
+                        const obj = Function('window', match[0] + '; return window._lk_db;')({});
                         return obj.x + obj.y + obj.z;
-                    } catch {}
+                        } catch (err) {}
                     }
-                }).get(0);
+                    })
+                    .get(0);
+
+
+
 
             
             if (!forward_key_token) {
@@ -204,7 +213,8 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         }))();
         // ===================
         if (!forward_key_token) return;
-
+        resolve({})
+        return
         // Get tracks
         data.media_info = {};
         ;await ((async () => {
