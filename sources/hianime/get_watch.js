@@ -146,11 +146,69 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         }))();
         // ===================
 
+        let forward_key_token = "";
+        // Get token
+        data.media_info = {};
+        ;await ((async () => {
+            const url = encodeURI(`https://megacloud.blog/embed-2/v3/e-1/${forward_source_id}?k=1`);
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    ...custom_fetch_headers,
+                    'Referer': `https://megacloud.blog/`,
+                    'Origin': `https://megacloud.blog`,
+                }
+            });
+
+            
+
+            if (!response.ok) {
+                console.error(`Failed to fetch: ${url}`);
+                resolve({code:500,message:response.statusText});
+                return;
+            }
+            
+            
+            const request_result = await response.text()
+            const $ = cheerio.load(request_result);
+
+            forward_key_token =
+                $('meta[name="_gg_fb"]').attr('content') ||
+                $('script[nonce]').attr('nonce') ||
+                $('div[data-dpi]').attr('data-dpi') ||
+                $('script').filter((_, el) => $(el).html().includes('window._xy_ws')).map((_, el) =>
+                    $(el).html().split('"')[1]
+                ).get(0) ||
+                $('*').contents().filter((_, el) =>
+                    el.type === 'comment' && el.data.startsWith('_is_th:')
+                ).map((_, el) => el.data.split(':')[1].trim()).get(0) ||
+                $('script').map((_, el) => {
+                    const js = $(el).html();
+                    if (js.includes('window._lk_db')) {
+                    try {
+                        const obj = eval(js.match(/window\._lk_db\s*=\s*({[^}]+})/)[1]);
+                        return obj.x + obj.y + obj.z;
+                    } catch {}
+                    }
+                }).get(0);
+
+            
+            if (!forward_key_token) {
+                console.error("Token not found");
+                resolve({code:500, message:"Token not found"});
+                return;
+            }else{
+                console.log("FORWARD TOKEN: " ,forward_key_token || 'Token not found');
+            }
+        }))();
+        // ===================
+        if (!forward_key_token) return;
 
         // Get tracks
         data.media_info = {};
         ;await ((async () => {
-            const url = encodeURI(`https://megacloud.blog/embed-2/v3/e-1/getSources?id=${forward_source_id}`);
+            const url = encodeURI(`https://megacloud.blog/embed-2/v3/e-1/getSources?id=${forward_source_id}&_k=${forward_key_token}`);
 
             const response = await fetch(url, {
                 method: 'GET',
