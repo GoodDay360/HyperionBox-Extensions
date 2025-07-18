@@ -213,8 +213,7 @@ const get_watch = async (options) => { return await new Promise(async (resolve) 
         }))();
         // ===================
         if (!forward_key_token) return;
-        resolve({})
-        return
+        
         // Get tracks
         data.media_info = {};
         ;await ((async () => {
